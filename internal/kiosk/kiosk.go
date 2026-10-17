@@ -27,6 +27,7 @@ const (
 	SourceTag       Source = "TAG"
 	SourceRating    Source = "RATING"
 	SourceMemories  Source = "MEMORIES"
+	SourceFilter    Source = "FILTER"
 
 	LayoutLandscape          string = "landscape"
 	LayoutPortrait           string = "portrait"

@@ -71,6 +71,7 @@ templ URLBuilderForm(c config.Config, d common.URLViewData, extended bool) {
 				} else {
 					<a href={ templ.SafeURL(urlBuilderNavLink("/url-builder", c.Kiosk.Password)) } class="extended-link">{ t("basic_options") }</a>
 				}
+				<a href={ templ.SafeURL(urlBuilderNavLink("/filter-builder", c.Kiosk.Password)) } class="extended-link" style="margin-left: 0.75rem;">Filter Builder</a>
 				<form
 					id="url-builder-form"
 					hx-post="/url-builder/build"
@@ -148,6 +149,7 @@ templ URLBuilderForm(c config.Config, d common.URLViewData, extended bool) {
 					if extended {
 						@URLBuilderNumber("Past memory days", "past_memory_days", "Include memories from the last N days. 0 shows only today.", 0, 360, strconv.FormatInt(int64(c.PastMemoryDays), 10))
 						@URLBuilderRadio("Include archived", "show_archived", "Allow assets marked as archived to be displayed.", "true", "true", "false", "false")
+						@URLBuilderFilter("Advanced Filter JSON", "filter", "Immich 3.2.0 Search API v2 JSON filter payload (supports boolean OR and multi-user map). Overrides legacy buckets.", c.FilterJSON, c.Kiosk.Password)
 					}
 					if extended {
 						// Video
@@ -393,5 +395,22 @@ templ URLBuilderSelect(displayName string, formName string, helpText string, key
 				>{ kvs[i] }</option>
 			}
 		</select>
+	</div>
+}
+
+templ URLBuilderFilter(displayName, formName, helpText, currentValue, password string) {
+	<div class="form-group">
+		{{ elementID := "url-builder-" + formName }}
+		<div style="display: flex; justify-content: space-between; align-items: baseline;">
+			<label for={ elementID }>{ displayName }</label>
+			<a href={ templ.SafeURL(urlBuilderNavLink("/filter-builder", password)) } target="_blank" style="font-size: 0.8rem; color: #60a5fa; text-decoration: none;">Test in Filter Builder ↗</a>
+		</div>
+		@URLBuilderHelpText(helpText)
+		<textarea
+			id={ elementID }
+			name={ formName }
+			placeholder='{"isFavorite": true}'
+			style="width: 100%; min-height: 80px; box-sizing: border-box; font-family: monospace; font-size: 0.85rem; padding: 0.5rem; background: rgba(0,0,0,0.2); color: inherit; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;"
+		>{ currentValue }</textarea>
 	</div>
 }

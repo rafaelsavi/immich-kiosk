@@ -209,7 +209,11 @@ func ImageWithID(baseConfig *config.Config, com *common.Common) echo.HandlerFunc
 		}
 
 		immichAsset := immich.New(com.Context(), requestConfig)
-		immichAsset.ID = imageID
+		cleanID, user := immichAsset.ApplyUserFromAssetID(imageID)
+		if user == "" && c.QueryParam("user") != "" {
+			cleanID, _ = immichAsset.ApplyUserFromAssetID(imageID + kiosk.MultipleUserIndicator + c.QueryParam("user"))
+		}
+		immichAsset.ID = cleanID
 
 		if requestConfig.UseOriginalImage {
 			if assetInfoErr := immichAsset.AssetInfo(requestID, ""); assetInfoErr != nil {

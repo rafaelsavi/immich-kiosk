@@ -218,6 +218,8 @@ func main() {
 		e.GET("/url-builder", routes.URLBuilderPage(baseConfig, c, false))
 		e.GET("/url-builder/extended", routes.URLBuilderPage(baseConfig, c, true))
 		e.POST("/url-builder/build", routes.BuildURL(baseConfig))
+		e.GET("/filter-builder", routes.FilterBuilderPage(baseConfig, c))
+		e.POST("/filter-builder/search", routes.FilterBuilderSearch(baseConfig, c))
 	}
 
 	e.GET("/about", routes.About(baseConfig))

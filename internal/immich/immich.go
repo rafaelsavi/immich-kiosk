@@ -7,6 +7,7 @@ package immich
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
@@ -255,8 +256,43 @@ type StringFilterNullable struct {
 	NotIn []string `json:"notIn,omitempty,omitzero"`
 }
 
+func (s *StringFilterNullable) UnmarshalJSON(data []byte) error {
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		s.Eq = strVal
+		return nil
+	}
+	var sliceVal []string
+	if err := json.Unmarshal(data, &sliceVal); err == nil {
+		s.In = sliceVal
+		return nil
+	}
+	type rawStringFilterNullable StringFilterNullable
+	var raw rawStringFilterNullable
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*s = StringFilterNullable(raw)
+	return nil
+}
+
 type BoolFilter struct {
 	Eq bool `json:"eq,omitempty,omitzero"`
+}
+
+func (b *BoolFilter) UnmarshalJSON(data []byte) error {
+	var boolVal bool
+	if err := json.Unmarshal(data, &boolVal); err == nil {
+		b.Eq = boolVal
+		return nil
+	}
+	type rawBoolFilter BoolFilter
+	var raw rawBoolFilter
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*b = BoolFilter(raw)
+	return nil
 }
 
 type DateFilter struct {
@@ -272,6 +308,26 @@ type IDsFilter struct {
 	All  []string `json:"all,omitempty,omitzero"`
 	Any  []string `json:"any,omitempty,omitzero"`
 	None []string `json:"none,omitempty,omitzero"`
+}
+
+func (ids *IDsFilter) UnmarshalJSON(data []byte) error {
+	var sliceVal []string
+	if err := json.Unmarshal(data, &sliceVal); err == nil {
+		ids.Any = sliceVal
+		return nil
+	}
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		ids.Any = []string{strVal}
+		return nil
+	}
+	type rawIDsFilter IDsFilter
+	var raw rawIDsFilter
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*ids = IDsFilter(raw)
+	return nil
 }
 
 type StringPatternFilter struct {
@@ -312,6 +368,21 @@ type NumberFilterNullable struct {
 	NotIn []float64 `json:"notIn,omitempty,omitzero"`
 }
 
+func (n *NumberFilterNullable) UnmarshalJSON(data []byte) error {
+	var numVal float64
+	if err := json.Unmarshal(data, &numVal); err == nil {
+		n.Eq = numVal
+		return nil
+	}
+	type rawNumberFilterNullable NumberFilterNullable
+	var raw rawNumberFilterNullable
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*n = NumberFilterNullable(raw)
+	return nil
+}
+
 type IDFilterNullable struct {
 	Eq string `json:"eq,omitempty,omitzero"`
 	Ne string `json:"ne,omitempty,omitzero"`
@@ -347,6 +418,40 @@ type SearchOrder struct {
 	Field     string     `json:"field,omitempty,omitzero"`
 }
 
+type SearchFilterBranch struct {
+	AlbumIDs         IDsFilter              `url:"albumIds,omitempty,omitzero" json:"albumIds,omitzero"`
+	Checksum         StringFilter           `url:"checksum,omitempty,omitzero" json:"checksum,omitzero"`
+	City             StringFilterNullable   `url:"city,omitempty,omitzero" json:"city,omitzero"`
+	Country          StringFilterNullable   `url:"country,omitempty,omitzero" json:"country,omitzero"`
+	CreatedAt        DateFilter             `url:"createdAt,omitempty,omitzero" json:"createdAt,omitzero"`
+	Description      StringPatternFilter    `url:"description,omitempty,omitzero" json:"description,omitzero"`
+	EncodedVideoPath StringFilter           `url:"encodedVideoPath,omitempty,omitzero" json:"encodedVideoPath,omitzero"`
+	FileSizeInBytes  NumberFilter           `url:"fileSizeInBytes,omitempty,omitzero" json:"fileSizeInBytes,omitzero"`
+	HasAlbums        BoolFilter             `url:"hasAlbums,omitempty,omitzero" json:"hasAlbums,omitzero"`
+	HasPeople        BoolFilter             `url:"hasPeople,omitempty,omitzero" json:"hasPeople,omitzero"`
+	HasTags          BoolFilter             `url:"hasTags,omitempty,omitzero" json:"hasTags,omitzero"`
+	ID               IDFilter               `url:"id,omitempty,omitzero" json:"id,omitzero"`
+	IsEncoded        BoolFilter             `url:"isEncoded,omitempty,omitzero" json:"isEncoded,omitzero"`
+	IsFavorite       BoolFilter             `url:"isFavorite,omitempty,omitzero" json:"isFavorite,omitzero"`
+	IsMotion         BoolFilter             `url:"isMotion,omitempty,omitzero" json:"isMotion,omitzero"`
+	IsOffline        BoolFilter             `url:"isOffline,omitempty,omitzero" json:"isOffline,omitzero"`
+	LensModel        StringFilterNullable   `url:"lensModel,omitempty,omitzero" json:"lensModel,omitzero"`
+	LibraryID        IDFilterNullable       `url:"libraryId,omitempty,omitzero" json:"libraryId,omitzero"`
+	Make             StringFilterNullable   `url:"make,omitempty,omitzero" json:"make,omitzero"`
+	Model            StringFilterNullable   `url:"model,omitempty,omitzero" json:"model,omitzero"`
+	Ocr              StringSimilarityFilter `url:"ocr,omitempty,omitzero" json:"ocr,omitzero"`
+	OriginalFileName StringPatternFilter    `url:"originalFileName,omitempty,omitzero" json:"originalFileName,omitzero"`
+	OriginalPath     StringPatternFilter    `url:"originalPath,omitempty,omitzero" json:"originalPath,omitzero"`
+	PersonIDs        IDsFilter              `url:"personIds,omitempty,omitzero" json:"personIds,omitzero"`
+	Rating           NumberFilterNullable   `url:"rating,omitempty,omitzero" json:"rating,omitzero"`
+	State            StringFilterNullable   `json:"state,omitzero"`
+	TagIDs           IDsFilter              `url:"tagIds,omitempty,omitzero" json:"tagIds,omitzero"`
+	TakenAt          DateFilter             `url:"takenAt,omitempty,omitzero" json:"takenAt,omitzero"`
+	Type             FilterAssetType        `url:"type,omitempty,omitzero" json:"type,omitzero"`
+	UpdatedAt        DateFilter             `url:"updatedAt,omitempty,omitzero" json:"updatedAt,omitzero"`
+	Visibility       FilterAssetVisibility  `url:"visibility,omitempty,omitzero" json:"visibility,omitzero"`
+}
+
 type SearchFilter struct {
 	AlbumIDs         IDsFilter              `url:"albumIds,omitempty,omitzero" json:"albumIds,omitzero"`
 	Checksum         StringFilter           `url:"checksum,omitempty,omitzero" json:"checksum,omitzero"`
@@ -369,18 +474,17 @@ type SearchFilter struct {
 	Make             StringFilterNullable   `url:"make,omitempty,omitzero" json:"make,omitzero"`
 	Model            StringFilterNullable   `url:"model,omitempty,omitzero" json:"model,omitzero"`
 	Ocr              StringSimilarityFilter `url:"ocr,omitempty,omitzero" json:"ocr,omitzero"`
-	// Or               *[]SearchFilterBranch      `json:"or,omitempty,omitzero"`
-	OriginalFileName StringPatternFilter  `url:"originalFileName,omitempty,omitzero" json:"originalFileName,omitzero"`
-	OriginalPath     StringPatternFilter  `url:"originalPath,omitempty,omitzero" json:"originalPath,omitzero"`
-	PersonIDs        IDsFilter            `url:"personIds,omitempty,omitzero" json:"personIds,omitzero"`
-	Rating           NumberFilterNullable `url:"rating,omitempty,omitzero" json:"rating,omitzero"`
-	State            StringFilterNullable `json:"state,omitzero"`
-	TagIDs           IDsFilter            `url:"tagIds,omitempty,omitzero" json:"tagIds,omitzero"`
-	TakenAt          DateFilter           `url:"takenAt,omitempty,omitzero" json:"takenAt,omitzero"`
-	// TrashedAt        *DateFilterNullable        `json:"trashedAt,omitempty,omitzero"`
-	Type       FilterAssetType       `url:"type,omitempty,omitzero" json:"type,omitzero"`
-	UpdatedAt  DateFilter            `url:"updatedAt,omitempty,omitzero" json:"updatedAt,omitzero"`
-	Visibility FilterAssetVisibility `url:"visibility,omitempty,omitzero" json:"visibility,omitzero"`
+	Or               *[]SearchFilterBranch  `url:"or,omitempty,omitzero" json:"or,omitempty,omitzero"`
+	OriginalFileName StringPatternFilter    `url:"originalFileName,omitempty,omitzero" json:"originalFileName,omitzero"`
+	OriginalPath     StringPatternFilter    `url:"originalPath,omitempty,omitzero" json:"originalPath,omitzero"`
+	PersonIDs        IDsFilter              `url:"personIds,omitempty,omitzero" json:"personIds,omitzero"`
+	Rating           NumberFilterNullable   `url:"rating,omitempty,omitzero" json:"rating,omitzero"`
+	State            StringFilterNullable   `json:"state,omitzero"`
+	TagIDs           IDsFilter              `url:"tagIds,omitempty,omitzero" json:"tagIds,omitzero"`
+	TakenAt          DateFilter             `url:"takenAt,omitempty,omitzero" json:"takenAt,omitzero"`
+	Type             FilterAssetType        `url:"type,omitempty,omitzero" json:"type,omitzero"`
+	UpdatedAt        DateFilter             `url:"updatedAt,omitempty,omitzero" json:"updatedAt,omitzero"`
+	Visibility       FilterAssetVisibility  `url:"visibility,omitempty,omitzero" json:"visibility,omitzero"`
 }
 
 type SearchRandomBody struct {

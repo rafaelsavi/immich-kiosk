@@ -271,6 +271,7 @@ func TestRenderServiceWorkerFallbackHTML(t *testing.T) {
 
 func workerString(t *testing.T, worker, name string) string {
 	t.Helper()
+	worker = strings.ReplaceAll(worker, "\r\n", "\n")
 	pattern := regexp.MustCompile("(?m)^var " + name + " = (.+);$")
 	match := pattern.FindStringSubmatch(worker)
 	if match == nil {

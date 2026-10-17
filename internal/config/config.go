@@ -376,6 +376,8 @@ type Config struct {
 	FilterExcludeFaces bool `json:"filterExcludeFaces" yaml:"filter_exclude_faces" mapstructure:"filter_exclude_faces" query:"filter_exclude_faces" form:"filter_exclude_faces" default:"false"`
 	// FilterFavorites filter certain asset bucket assets to only favorites
 	FilterFavorites bool `json:"filterFavorites" yaml:"filter_favorites" mapstructure:"filter_favorites" query:"filter_favorites" form:"filter_favorites" default:"false"`
+	// FilterJSON raw JSON filter string for Immich 3.2.0 Search API v2
+	FilterJSON string `json:"filter" yaml:"filter" mapstructure:"filter" query:"filter" form:"filter" default:""`
 
 	// ShowClearCacheButton display a button to clear cache
 	ShowClearCacheButton bool `json:"showClearCacheButton" yaml:"show_clear_cache_button" mapstructure:"show_clear_cache_button" query:"show_clear_cache_button" form:"show_clear_cache_button" default:"false"`
@@ -777,7 +779,7 @@ func (c *Config) ConfigWithOverrides(queries url.Values, e *echo.Context) error 
 	}
 
 	// check for person or album in quries and empty baseconfig slice if found
-	if queries.Has("person") || queries.Has("album") || queries.Has("date") || queries.Has("tag") || queries.Has("memories") || queries.Has("rating") {
+	if queries.Has("person") || queries.Has("album") || queries.Has("date") || queries.Has("tag") || queries.Has("memories") || queries.Has("rating") || queries.Has("filter") {
 		c.ResetBuckets()
 	}
 

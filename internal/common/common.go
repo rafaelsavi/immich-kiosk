@@ -137,6 +137,34 @@ type URLViewData struct {
 	Tags   []immich.Tag
 }
 
+type FilterBuilderAssetItem struct {
+	ID           string
+	ThumbnailURL string
+	User         string
+	Type         string
+	City         string
+	Country      string
+	TakenAt      string
+	IsFavorite   bool
+	Rating       int
+	People       []string
+	Filename     string
+}
+
+type FilterBuilderViewData struct {
+	ViewData ViewData
+	Users    []string
+}
+
+type FilterBuilderResultData struct {
+	Total        int
+	Assets       []FilterBuilderAssetItem
+	FilterJSON   string
+	KioskURL     string
+	RedirectYAML string
+	Error        string
+}
+
 type URLBuilderRequest struct {
 	// Duration
 	Duration       *uint64 `form:"duration" url:"duration,omitempty"`
@@ -159,6 +187,7 @@ type URLBuilderRequest struct {
 	PastMemoryDays   *uint64  `form:"past_memory_days" url:"past_memory_days,omitempty"`
 
 	ShowArchived *bool `form:"show_archived" url:"show_archived,omitempty"`
+	FilterJSON   *string `form:"filter" url:"filter,omitempty"`
 
 	// Video
 	ShowVideos         *bool   `form:"show_videos" url:"show_videos,omitempty"`

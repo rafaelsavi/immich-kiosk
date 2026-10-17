@@ -73,6 +73,42 @@ func gatherAssetBuckets(immichAsset *immich.Asset, requestConfig config.Config, 
 		requestConfig: requestConfig,
 	}
 
+	// FilterJSON bucket
+	if requestConfig.FilterJSON != "" {
+		filters, err := immich.ParseUserFilters(requestConfig.FilterJSON, requestConfig.URLParamUsers)
+		if err != nil {
+			log.Error("failed to parse filter JSON", "err", err)
+			return nil, err
+		}
+		if len(filters) > 0 {
+			weight := requestConfig.Kiosk.FetchedAssetsSize
+			if weight <= 0 {
+				weight = 100
+			}
+
+			// If filter is global (single key ""), expand across URLParamUsers if specified
+			if len(filters) == 1 {
+				if _, hasGlobal := filters[""]; hasGlobal && len(requestConfig.URLParamUsers) > 0 {
+					for _, u := range requestConfig.URLParamUsers {
+						assets = append(assets, utils.AssetWithWeighting{
+							Asset:  utils.WeightedAsset{Type: kiosk.SourceFilter, ID: u},
+							Weight: weight,
+						})
+					}
+					return assets, nil
+				}
+			}
+
+			for user := range filters {
+				assets = append(assets, utils.AssetWithWeighting{
+					Asset:  utils.WeightedAsset{Type: kiosk.SourceFilter, ID: user},
+					Weight: weight,
+				})
+			}
+			return assets, nil
+		}
+	}
+
 	// People bucket
 	err := gatherPeople(&d)
 	if err != nil {
@@ -368,6 +404,9 @@ func retrieveImage(immichAsset *immich.Asset, pickedAsset utils.WeightedAsset, e
 
 	case kiosk.SourceRating:
 		return immichAsset.RandomAssetWithRating(pickedAsset.ID, requestID, deviceID, isPrefetch)
+
+	case kiosk.SourceFilter:
+		return immichAsset.RandomAssetWithFilter(pickedAsset.ID, requestID, deviceID, isPrefetch)
 
 	case kiosk.SourceRandom:
 		fallthrough
@@ -686,6 +725,8 @@ func handleRelativeAssetConfig(config *config.Config, options common.ViewImageDa
 		config.Dates = append(config.Dates, options.RelativeAssetBucketID)
 	case kiosk.SourceTag:
 		config.Tags = append(config.Tags, options.RelativeAssetBucketID)
+	case kiosk.SourceFilter:
+		// Preserve FilterJSON for relative assets
 	case kiosk.SourceMemories:
 		config.Memories = true
 		config.MemoriesOnly = true

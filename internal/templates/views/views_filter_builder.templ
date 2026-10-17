@@ -1,0 +1,787 @@
+package views
+
+import (
+	"fmt"
+	"net/url"
+
+	"github.com/damongolding/immich-kiosk/internal/common"
+	"github.com/damongolding/immich-kiosk/internal/templates/partials"
+)
+
+func filterBuilderNavLink(path, password string) string {
+	if password == "" {
+		return path
+	}
+	return path + "?password=" + url.QueryEscape(password)
+}
+
+templ FilterBuilder(d common.FilterBuilderViewData) {
+	@HTMLTag(d.ViewData.SystemLang) {
+		<head>
+			@partials.Head(d.ViewData)
+			<script src={ string(templ.URL(fmt.Sprintf("/assets/js/url-builder.%s.js", d.ViewData.KioskVersion))) }></script>
+			<style>
+				:root {
+					--fb-bg: #0f1117;
+					--fb-card-bg: rgba(26, 31, 46, 0.75);
+					--fb-card-border: rgba(255, 255, 255, 0.08);
+					--fb-accent: #3b82f6;
+					--fb-accent-hover: #2563eb;
+					--fb-accent-glow: rgba(59, 130, 246, 0.35);
+					--fb-text-main: #f3f4f6;
+					--fb-text-muted: #9ca3af;
+					--fb-code-bg: #090d16;
+				}
+
+				body#filter-builder-page {
+					background-color: var(--fb-bg);
+					color: var(--fb-text-main);
+					font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+					margin: 0;
+					padding: 0;
+					min-height: 100vh;
+				}
+
+				.filter-builder-navbar {
+					background: rgba(15, 17, 23, 0.85);
+					backdrop-filter: blur(12px);
+					border-bottom: 1px solid var(--fb-card-border);
+					padding: 1rem 2rem;
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					position: sticky;
+					top: 0;
+					z-index: 50;
+				}
+
+				.filter-builder-brand {
+					display: flex;
+					align-items: center;
+					gap: 0.75rem;
+				}
+
+				.filter-builder-brand h1 {
+					font-size: 1.25rem;
+					font-weight: 700;
+					margin: 0;
+					background: linear-gradient(135deg, #60a5fa, #a78bfa);
+					-webkit-background-clip: text;
+					-webkit-text-fill-color: transparent;
+				}
+
+				.filter-builder-badge {
+					font-size: 0.75rem;
+					background: rgba(59, 130, 246, 0.15);
+					color: #93c5fd;
+					border: 1px solid rgba(59, 130, 246, 0.3);
+					padding: 0.2rem 0.6rem;
+					border-radius: 9999px;
+					font-weight: 500;
+				}
+
+				.filter-builder-navlinks {
+					display: flex;
+					align-items: center;
+					gap: 1rem;
+				}
+
+				.filter-builder-navlinks a {
+					color: var(--fb-text-muted);
+					text-decoration: none;
+					font-size: 0.9rem;
+					padding: 0.4rem 0.8rem;
+					border-radius: 6px;
+					transition: all 0.2s ease;
+				}
+
+				.filter-builder-navlinks a:hover {
+					color: #fff;
+					background: rgba(255, 255, 255, 0.06);
+				}
+
+				.filter-builder-container {
+					max-width: 1400px;
+					margin: 0 auto;
+					padding: 2rem;
+				}
+
+				.filter-builder-editor-section {
+					background: var(--fb-card-bg);
+					backdrop-filter: blur(16px);
+					border: 1px solid var(--fb-card-border);
+					border-radius: 14px;
+					padding: 1.5rem;
+					margin-bottom: 2.5rem;
+					box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+				}
+
+				.filter-builder-presets-bar {
+					display: flex;
+					flex-wrap: wrap;
+					align-items: center;
+					gap: 0.5rem;
+					margin-bottom: 1.25rem;
+				}
+
+				.filter-builder-presets-label {
+					font-size: 0.85rem;
+					color: var(--fb-text-muted);
+					font-weight: 600;
+					margin-right: 0.5rem;
+				}
+
+				.btn-preset {
+					background: rgba(255, 255, 255, 0.05);
+					border: 1px solid rgba(255, 255, 255, 0.1);
+					color: #e5e7eb;
+					padding: 0.35rem 0.75rem;
+					border-radius: 6px;
+					font-size: 0.82rem;
+					cursor: pointer;
+					transition: all 0.2s ease;
+					display: inline-flex;
+					align-items: center;
+					gap: 0.35rem;
+				}
+
+				.btn-preset:hover {
+					background: rgba(59, 130, 246, 0.2);
+					border-color: rgba(59, 130, 246, 0.5);
+					color: #93c5fd;
+				}
+
+				.filter-builder-controls-row {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					flex-wrap: wrap;
+					gap: 1rem;
+					margin-bottom: 0.75rem;
+				}
+
+				.filter-builder-dropdowns {
+					display: flex;
+					align-items: center;
+					gap: 1rem;
+					flex-wrap: wrap;
+				}
+
+				.filter-builder-field-group {
+					display: flex;
+					align-items: center;
+					gap: 0.5rem;
+				}
+
+				.filter-builder-field-group label {
+					font-size: 0.85rem;
+					color: var(--fb-text-muted);
+				}
+
+				.filter-builder-field-group select {
+					background: #111827;
+					border: 1px solid rgba(255, 255, 255, 0.15);
+					color: #f3f4f6;
+					padding: 0.4rem 0.8rem;
+					border-radius: 6px;
+					font-size: 0.85rem;
+					outline: none;
+				}
+
+				.filter-builder-textarea-wrapper {
+					position: relative;
+					margin-bottom: 1rem;
+				}
+
+				.filter-builder-textarea {
+					width: 100%;
+					min-height: 160px;
+					box-sizing: border-box;
+					background: var(--fb-code-bg);
+					border: 1px solid rgba(255, 255, 255, 0.15);
+					border-radius: 8px;
+					padding: 1rem;
+					color: #67e8f9;
+					font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+					font-size: 0.95rem;
+					line-height: 1.5;
+					resize: vertical;
+					outline: none;
+					transition: border-color 0.2s ease;
+				}
+
+				.filter-builder-textarea:focus {
+					border-color: var(--fb-accent);
+					box-shadow: 0 0 0 2px var(--fb-accent-glow);
+				}
+
+				.filter-builder-actions-row {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					flex-wrap: wrap;
+					gap: 1rem;
+				}
+
+				.filter-builder-btn-run {
+					background: linear-gradient(135deg, #3b82f6, #6366f1);
+					color: #fff;
+					border: none;
+					padding: 0.65rem 1.6rem;
+					border-radius: 8px;
+					font-size: 0.95rem;
+					font-weight: 600;
+					cursor: pointer;
+					display: inline-flex;
+					align-items: center;
+					gap: 0.5rem;
+					transition: all 0.2s ease;
+					box-shadow: 0 4px 14px 0 var(--fb-accent-glow);
+				}
+
+				.filter-builder-btn-run:hover {
+					background: linear-gradient(135deg, #2563eb, #4f46e5);
+					transform: translateY(-1px);
+					box-shadow: 0 6px 18px 0 var(--fb-accent-glow);
+				}
+
+				.filter-builder-btn-format {
+					background: rgba(255, 255, 255, 0.08);
+					border: 1px solid rgba(255, 255, 255, 0.12);
+					color: #e5e7eb;
+					padding: 0.4rem 0.8rem;
+					border-radius: 6px;
+					font-size: 0.82rem;
+					cursor: pointer;
+					transition: all 0.2s ease;
+				}
+
+				.filter-builder-btn-format:hover {
+					background: rgba(255, 255, 255, 0.15);
+				}
+
+				.filter-builder-hint {
+					font-size: 0.8rem;
+					color: var(--fb-text-muted);
+				}
+
+				/* Loading Indicator */
+				.htmx-indicator {
+					display: none;
+				}
+				.htmx-request .htmx-indicator {
+					display: inline-flex !important;
+				}
+				.htmx-request.htmx-indicator {
+					display: inline-flex !important;
+				}
+
+				.spinner {
+					width: 18px;
+					height: 18px;
+					border: 2px solid rgba(255,255,255,0.3);
+					border-radius: 50%;
+					border-top-color: #fff;
+					animation: spin 0.8s linear infinite;
+				}
+
+				@keyframes spin {
+					to { transform: rotate(360deg); }
+				}
+
+				/* Results Styling */
+				.filter-builder-results-container {
+					margin-top: 1rem;
+				}
+
+				.filter-builder-alert {
+					padding: 1.25rem 1.5rem;
+					border-radius: 10px;
+					display: flex;
+					gap: 1rem;
+					align-items: flex-start;
+					margin-bottom: 2rem;
+				}
+
+				.filter-builder-alert--error {
+					background: rgba(239, 68, 68, 0.12);
+					border: 1px solid rgba(239, 68, 68, 0.3);
+					color: #fca5a5;
+				}
+
+				.filter-builder-alert--empty {
+					background: rgba(148, 163, 184, 0.08);
+					border: 1px solid rgba(148, 163, 184, 0.2);
+					color: #cbd5e1;
+				}
+
+				.filter-builder-alert h4 {
+					margin: 0 0 0.25rem 0;
+					font-size: 1rem;
+				}
+
+				.filter-builder-alert p {
+					margin: 0;
+					font-size: 0.9rem;
+					line-height: 1.4;
+				}
+
+				.filter-builder-summary {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					margin-bottom: 1.5rem;
+				}
+
+				.filter-builder-badge-count {
+					display: flex;
+					align-items: center;
+					gap: 0.6rem;
+					font-size: 1rem;
+					color: #d1d5db;
+				}
+
+				.count-pill {
+					background: #3b82f6;
+					color: #fff;
+					font-weight: 700;
+					padding: 0.2rem 0.6rem;
+					border-radius: 6px;
+					font-size: 0.95rem;
+				}
+
+				.filter-builder-export-grid {
+					display: grid;
+					grid-template-columns: 1fr 1fr;
+					gap: 1.25rem;
+					margin-bottom: 2.5rem;
+				}
+
+				@media (max-width: 900px) {
+					.filter-builder-export-grid {
+						grid-template-columns: 1fr;
+					}
+				}
+
+				.filter-builder-export-card {
+					background: rgba(17, 24, 39, 0.7);
+					border: 1px solid var(--fb-card-border);
+					border-radius: 10px;
+					padding: 1rem 1.25rem;
+				}
+
+				.filter-builder-export-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					margin-bottom: 0.6rem;
+					font-size: 0.85rem;
+					font-weight: 600;
+					color: #9ca3af;
+				}
+
+				.filter-builder-export-actions {
+					display: flex;
+					gap: 0.5rem;
+				}
+
+				.btn-copy, .btn-launch {
+					background: rgba(255, 255, 255, 0.08);
+					border: 1px solid rgba(255, 255, 255, 0.12);
+					color: #e5e7eb;
+					padding: 0.3rem 0.65rem;
+					border-radius: 5px;
+					font-size: 0.78rem;
+					cursor: pointer;
+					display: inline-flex;
+					align-items: center;
+					gap: 0.35rem;
+					text-decoration: none;
+					transition: all 0.2s ease;
+				}
+
+				.btn-copy:hover, .btn-launch:hover {
+					background: rgba(59, 130, 246, 0.2);
+					color: #93c5fd;
+					border-color: rgba(59, 130, 246, 0.4);
+				}
+
+				.filter-builder-code-block {
+					background: var(--fb-code-bg);
+					border: 1px solid rgba(255, 255, 255, 0.05);
+					border-radius: 6px;
+					padding: 0.75rem;
+					overflow-x: auto;
+				}
+
+				.filter-builder-code-block code, .filter-builder-code-block pre {
+					font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+					font-size: 0.82rem;
+					color: #93c5fd;
+					margin: 0;
+					white-space: pre-wrap;
+					word-break: break-all;
+				}
+
+				.filter-builder-gallery-header {
+					display: flex;
+					align-items: baseline;
+					gap: 0.75rem;
+					margin-bottom: 1.25rem;
+				}
+
+				.filter-builder-gallery-header h3 {
+					font-size: 1.3rem;
+					margin: 0;
+					font-weight: 700;
+				}
+
+				.gallery-subtitle {
+					font-size: 0.85rem;
+					color: var(--fb-text-muted);
+				}
+
+				.filter-builder-grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+					gap: 1.25rem;
+				}
+
+				.filter-builder-card {
+					background: rgba(26, 31, 46, 0.6);
+					border: 1px solid rgba(255, 255, 255, 0.07);
+					border-radius: 10px;
+					overflow: hidden;
+					display: flex;
+					flex-direction: column;
+					transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+				}
+
+				.filter-builder-card:hover {
+					transform: translateY(-4px);
+					box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5);
+					border-color: rgba(59, 130, 246, 0.4);
+				}
+
+				.filter-builder-card-media {
+					position: relative;
+					width: 100%;
+					padding-top: 68%;
+					background: #111827;
+					overflow: hidden;
+				}
+
+				.filter-builder-card-link {
+					position: absolute;
+					top: 0;
+					left: 0;
+					width: 100%;
+					height: 100%;
+					display: block;
+				}
+
+				.filter-builder-card-thumb {
+					width: 100%;
+					height: 100%;
+					object-fit: cover;
+					transition: transform 0.3s ease;
+				}
+
+				.filter-builder-card:hover .filter-builder-card-thumb {
+					transform: scale(1.05);
+				}
+
+				.filter-builder-card-badges {
+					position: absolute;
+					top: 0.5rem;
+					left: 0.5rem;
+					right: 0.5rem;
+					display: flex;
+					flex-wrap: wrap;
+					gap: 0.35rem;
+					pointer-events: none;
+				}
+
+				.badge {
+					font-size: 0.7rem;
+					font-weight: 700;
+					padding: 0.15rem 0.45rem;
+					border-radius: 4px;
+					text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+					backdrop-filter: blur(6px);
+				}
+
+				.badge-favorite {
+					background: rgba(239, 68, 68, 0.85);
+					color: #fff;
+				}
+
+				.badge-rating {
+					background: rgba(234, 179, 8, 0.85);
+					color: #fff;
+				}
+
+				.badge-video {
+					background: rgba(99, 102, 241, 0.85);
+					color: #fff;
+				}
+
+				.badge-user {
+					background: rgba(16, 185, 129, 0.85);
+					color: #fff;
+				}
+
+				.filter-builder-card-meta {
+					padding: 0.85rem;
+					display: flex;
+					flex-direction: column;
+					gap: 0.4rem;
+					flex: 1;
+				}
+
+				.filter-builder-meta-location, .filter-builder-meta-date {
+					display: flex;
+					align-items: center;
+					gap: 0.4rem;
+					font-size: 0.78rem;
+					color: #cbd5e1;
+				}
+
+				.filter-builder-meta-people {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 0.25rem;
+					margin-top: 0.2rem;
+				}
+
+				.person-tag {
+					background: rgba(255, 255, 255, 0.08);
+					border: 1px solid rgba(255, 255, 255, 0.1);
+					font-size: 0.7rem;
+					color: #93c5fd;
+					padding: 0.1rem 0.4rem;
+					border-radius: 4px;
+				}
+
+				.filter-builder-meta-filename {
+					font-size: 0.72rem;
+					color: #64748b;
+					margin-top: auto;
+					padding-top: 0.4rem;
+					text-overflow: ellipsis;
+					overflow: hidden;
+					white-space: nowrap;
+				}
+			</style>
+		</head>
+		<body id="filter-builder-page" class="notranslate">
+			<!-- Top Navigation Bar -->
+			<nav class="filter-builder-navbar">
+				<div class="filter-builder-brand">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2">
+						<rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+						<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+						<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+					</svg>
+					<h1>Filter Builder</h1>
+					<span class="filter-builder-badge">Immich 3.2.0 Search v2</span>
+				</div>
+				<div class="filter-builder-navlinks">
+					<a href={ templ.SafeURL(filterBuilderNavLink("/url-builder", d.ViewData.Config.Kiosk.Password)) }>URL Builder</a>
+					<a href={ templ.SafeURL(filterBuilderNavLink("/url-builder/extended", d.ViewData.Config.Kiosk.Password)) }>Extended Options</a>
+					<a href={ templ.SafeURL(filterBuilderNavLink("/", d.ViewData.Config.Kiosk.Password)) }>Launch Kiosk</a>
+				</div>
+			</nav>
+
+			<main class="filter-builder-container">
+				<!-- Filter Editor Section -->
+				<section class="filter-builder-editor-section">
+					<!-- Quick Presets -->
+					<div class="filter-builder-presets-bar">
+						<span class="filter-builder-presets-label">Presets:</span>
+						<button type="button" class="btn-preset" onclick="setPreset('favorites')">
+							<span>♥ Favorites</span>
+						</button>
+						<button type="button" class="btn-preset" onclick="setPreset('japan_rating')">
+							<span>🗾 Japan & 4+ ★</span>
+						</button>
+						<button type="button" class="btn-preset" onclick="setPreset('tokyo_or_kyoto')">
+							<span>🔀 OR (Tokyo / Kyoto)</span>
+						</button>
+						if len(d.Users) > 1 {
+							<button type="button" class="btn-preset" onclick="setPreset('multi_user')">
+								<span>👥 Multi-User Map</span>
+							</button>
+						}
+						<button type="button" class="btn-preset" onclick="setPreset('taken_recent')">
+							<span>📅 Year 2024</span>
+						</button>
+						<button type="button" class="btn-preset" onclick="setPreset('videos')">
+							<span>▶ Videos Only</span>
+						</button>
+					</div>
+
+					<form
+						id="filter-builder-form"
+						hx-post="/filter-builder/search"
+						hx-target="#filter-builder-results"
+						hx-swap="outerHTML"
+						hx-trigger="load, submit"
+						hx-indicator="#loading-spinner"
+						if d.ViewData.Config.Kiosk.Password != "" {
+							hx-headers={ templ.JSONString(map[string]string{
+								"Authorization": fmt.Sprintf("Bearer %s", d.ViewData.Config.Kiosk.Password),
+							}) }
+						}
+					>
+						if d.ViewData.Config.Kiosk.Password != "" {
+							<input type="hidden" name="password" value={ d.ViewData.Config.Kiosk.Password }/>
+						}
+						<div class="filter-builder-controls-row">
+							<div class="filter-builder-dropdowns">
+								if len(d.Users) > 1 {
+									<div class="filter-builder-field-group">
+										<label for="user-select">Target Account:</label>
+										<select id="user-select" name="user">
+											<option value="all">👥 All Accounts / Multi-User Map</option>
+											for _, u := range d.Users {
+												<option value={ u }>{ u }</option>
+											}
+										</select>
+									</div>
+								} else if len(d.Users) == 1 {
+									<input type="hidden" name="user" value={ d.Users[0] }/>
+								} else {
+									<input type="hidden" name="user" value=""/>
+								}
+
+								<div class="filter-builder-field-group">
+									<label for="limit-select">Sample Size:</label>
+									<select id="limit-select" name="limit">
+										<option value="12">12 assets</option>
+										<option value="24" selected>24 assets</option>
+										<option value="48">48 assets</option>
+										<option value="96">96 assets</option>
+									</select>
+								</div>
+							</div>
+
+							<button type="button" class="filter-builder-btn-format" onclick="formatJSON()">
+								<span>{ } Format JSON</span>
+							</button>
+						</div>
+
+						<div class="filter-builder-textarea-wrapper">
+							<textarea
+								id="filter-textarea"
+								name="filter"
+								class="filter-builder-textarea"
+								spellcheck="false"
+								placeholder="Enter JSON filter payload..."
+							>{`{
+  "isFavorite": true
+}`}</textarea>
+						</div>
+
+						<div class="filter-builder-actions-row">
+							<button type="submit" class="filter-builder-btn-run">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+									<polygon points="5 3 19 12 5 21 5 3"></polygon>
+								</svg>
+								<span>Run Simulation</span>
+							</button>
+
+							<div id="loading-spinner" class="htmx-indicator" style="align-items: center; gap: 0.5rem; color: #93c5fd; font-size: 0.9rem;">
+								<div class="spinner"></div>
+								<span>Querying Immich API...</span>
+							</div>
+
+							<span class="filter-builder-hint">Supports boolean OR branches, operator objects (eq, in, gte), and per-user filter maps.</span>
+						</div>
+					</form>
+				</section>
+
+				<!-- Target container for htmx results -->
+				<div id="filter-builder-results"></div>
+			</main>
+
+			<!-- Interactive Client Scripts -->
+			<script>
+				const presets = {
+					favorites: JSON.stringify({ isFavorite: true }, null, 2),
+					japan_rating: JSON.stringify({
+						country: "Japan",
+						rating: { gte: 4 }
+					}, null, 2),
+					tokyo_or_kyoto: JSON.stringify({
+						country: "Japan",
+						or: [
+							{ city: "Tokyo" },
+							{ city: "Kyoto" }
+						]
+					}, null, 2),
+					multi_user: JSON.stringify({
+						user1: { isFavorite: true, country: "Spain" },
+						user2: { isFavorite: true, country: "Italy" }
+					}, null, 2),
+					taken_recent: JSON.stringify({
+						takenAfter: "2024-01-01T00:00:00Z",
+						takenBefore: "2024-12-31T23:59:59Z"
+					}, null, 2),
+					videos: JSON.stringify({
+						type: "VIDEO"
+					}, null, 2)
+				};
+
+				function setPreset(key) {
+					const textarea = document.getElementById("filter-textarea");
+					if (textarea && presets[key]) {
+						textarea.value = presets[key];
+						const form = document.getElementById("filter-builder-form");
+						if (form) {
+							htmx.trigger(form, "submit");
+						}
+					}
+				}
+
+				function formatJSON() {
+					const textarea = document.getElementById("filter-textarea");
+					if (!textarea) return;
+					try {
+						const parsed = JSON.parse(textarea.value);
+						textarea.value = JSON.stringify(parsed, null, 2);
+					} catch (e) {
+						alert("Cannot format: Invalid JSON syntax (" + e.message + ")");
+					}
+				}
+
+				async function copySnippet(btn, elementId) {
+					const el = document.getElementById(elementId);
+					if (!el) return;
+					const text = el.innerText || el.textContent;
+					try {
+						await navigator.clipboard.writeText(text);
+						const originalHTML = btn.innerHTML;
+						btn.innerHTML = '<span>✓ Copied!</span>';
+						setTimeout(() => {
+							btn.innerHTML = originalHTML;
+						}, 2000);
+					} catch (e) {
+						console.error("Clipboard copy failed", e);
+					}
+				}
+
+				// Ctrl+Enter / Cmd+Enter runs simulation
+				document.addEventListener("keydown", (e) => {
+					if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+						const form = document.getElementById("filter-builder-form");
+						if (form) {
+							e.preventDefault();
+							htmx.trigger(form, "submit");
+						}
+					}
+				});
+			</script>
+		</body>
+	}
+}

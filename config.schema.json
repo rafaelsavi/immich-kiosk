@@ -534,6 +534,10 @@
         }
       }
     },
+    "filter": {
+      "type": "string",
+      "description": "Immich 3.2.0 Search API v2 JSON filter payload or multi-user map"
+    },
     "webhooks": {
       "type": "array",
       "items": {

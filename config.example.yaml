@@ -64,6 +64,21 @@ memories: false # show memories
 # filter_exclude_faces: false # Excludes assets where Immich has detected a face
 # filter_favorites: false # Filter to only show favorite assets
 
+## Advanced Filter (Immich 3.2.0 Search API v2)
+# Overrides legacy buckets with full Immich Search v2 capabilities, supporting
+# boolean AND / OR branching, operator objects, and per-user filter maps.
+# Test interactively with real image thumbnails at /filter-builder (requires enable_url_builder: true).
+#
+# Single account filter example:
+# filter: '{"isFavorite": true, "country": "Japan", "rating": {"gte": 4}}'
+#
+# Boolean OR branch example (Japan AND (Tokyo OR Kyoto)):
+# filter: '{"country": "Japan", "or": [{"city": "Tokyo"}, {"city": "Kyoto"}]}'
+#
+# Multi-user account filter map (routes filters to user-specific API keys):
+# filter: '{"rafael": {"country": "Spain", "isFavorite": true}, "maria": {"country": "Italy"}}'
+
+
 ## UI
 show_clear_cache_button: false # Show a menu button to clear the Kiosk server cache
 show_progress_bar: false # display a progress bar
@@ -173,7 +188,7 @@ kiosk:
   behind_proxy: false
   disable_url_queries: false
   disable_config_endpoint: false
-  enable_url_builder: false
+  enable_url_builder: false # Enables the URL builder (/url-builder) and Filter Builder (/filter-builder)
   watch_config: false
   fetched_assets_size: 1000
   http_timeout: 20
