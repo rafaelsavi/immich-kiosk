@@ -460,6 +460,10 @@ func (a *Asset) ImagePreview() ([]byte, string, error) {
 	}
 
 	b, s, _, e := a.immichAPICall(a.ctx, http.MethodGet, apiURL.String(), nil)
+	if e != nil && !a.requestConfig.UseOriginalImage {
+		apiURL.RawQuery = "size=preview"
+		b, s, _, e = a.immichAPICall(a.ctx, http.MethodGet, apiURL.String(), nil)
+	}
 
 	return b, s, e
 }
