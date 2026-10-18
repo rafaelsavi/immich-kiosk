@@ -16,7 +16,8 @@ func TestParseUserFilters_SingleFilter(t *testing.T) {
 
 	filter, found := filters.ForUser("rafael")
 	assert.True(t, found)
-	assert.True(t, filter.IsFavorite.Eq)
+	require.NotNil(t, filter.IsFavorite.Eq)
+	assert.True(t, *filter.IsFavorite.Eq)
 	assert.Equal(t, "Japan", filter.Country.Eq)
 	assert.Equal(t, float64(4), filter.Rating.Eq)
 }
@@ -36,7 +37,8 @@ func TestParseUserFilters_WithOrBranch(t *testing.T) {
 
 	filter, found := filters.ForUser("")
 	assert.True(t, found)
-	assert.True(t, filter.IsFavorite.Eq)
+	require.NotNil(t, filter.IsFavorite.Eq)
+	assert.True(t, *filter.IsFavorite.Eq)
 	require.NotNil(t, filter.Or)
 	assert.Len(t, *filter.Or, 2)
 	assert.Equal(t, "Japan", (*filter.Or)[0].Country.Eq)
@@ -62,7 +64,8 @@ func TestParseUserFilters_MultiUser(t *testing.T) {
 	f1, found1 := filters.ForUser("rafael")
 	assert.True(t, found1)
 	assert.Equal(t, "Spain", f1.Country.Eq)
-	assert.True(t, f1.IsFavorite.Eq)
+	require.NotNil(t, f1.IsFavorite.Eq)
+	assert.True(t, *f1.IsFavorite.Eq)
 
 	f2, found2 := filters.ForUser("maria")
 	assert.True(t, found2)

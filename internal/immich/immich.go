@@ -279,21 +279,22 @@ func (s *StringFilterNullable) UnmarshalJSON(data []byte) error {
 }
 
 type BoolFilter struct {
-	Eq bool `json:"eq,omitempty,omitzero"`
+	Eq *bool `json:"eq,omitempty"`
 }
 
 func (b *BoolFilter) UnmarshalJSON(data []byte) error {
 	var boolVal bool
 	if err := json.Unmarshal(data, &boolVal); err == nil {
-		b.Eq = boolVal
+		b.Eq = &boolVal
 		return nil
 	}
-	type rawBoolFilter BoolFilter
-	var raw rawBoolFilter
+	var raw struct {
+		Eq *bool `json:"eq"`
+	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	*b = BoolFilter(raw)
+	b.Eq = raw.Eq
 	return nil
 }
 
@@ -510,6 +511,26 @@ type FilterAssetType struct {
 	NotIn []AssetType `json:"notIn,omitempty,omitzero"`
 }
 
+func (f *FilterAssetType) UnmarshalJSON(data []byte) error {
+	var single string
+	if err := json.Unmarshal(data, &single); err == nil {
+		f.In = []AssetType{AssetType(single)}
+		return nil
+	}
+	var list []AssetType
+	if err := json.Unmarshal(data, &list); err == nil {
+		f.In = list
+		return nil
+	}
+	type rawFilterAssetType FilterAssetType
+	var raw rawFilterAssetType
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*f = FilterAssetType(raw)
+	return nil
+}
+
 type SearchOrder struct {
 	// Direction Asset sort order
 	Direction AssetOrder `json:"direction,omitempty,omitzero"`
@@ -659,7 +680,7 @@ func (b *SearchFilter) WithVideos(enabled bool) *SearchFilter {
 
 func (b *SearchFilter) WithFilterFavorites(enabled bool) *SearchFilter {
 	if enabled {
-		b.IsFavorite = BoolFilter{Eq: true}
+		b.IsFavorite = BoolFilter{Eq: &enabled}
 	}
 	return b
 }

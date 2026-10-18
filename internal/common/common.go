@@ -154,6 +154,9 @@ type FilterBuilderAssetItem struct {
 type FilterBuilderViewData struct {
 	ViewData      ViewData
 	Users         []string
+	People        []immich.Person
+	Albums        immich.Albums
+	Tags          immich.Tags
 	InitialFilter string
 }
 

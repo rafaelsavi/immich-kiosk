@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/damongolding/immich-kiosk/internal/cache"
 	"github.com/damongolding/immich-kiosk/internal/common"
 	"github.com/damongolding/immich-kiosk/internal/config"
 	"github.com/labstack/echo/v5"
@@ -14,6 +15,7 @@ import (
 )
 
 func TestFilterBuilderPage(t *testing.T) {
+	cache.Initialize()
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/filter-builder", nil)
 	rec := httptest.NewRecorder()
