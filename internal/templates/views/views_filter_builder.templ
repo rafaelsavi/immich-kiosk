@@ -264,6 +264,286 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					color: var(--fb-text-muted);
 				}
 
+				/* Mode Tabs */
+				.fb-mode-tabs {
+					display: flex;
+					gap: 0.5rem;
+					border-bottom: 1px solid var(--fb-card-border);
+					margin-bottom: 1.25rem;
+					padding-bottom: 0.25rem;
+				}
+
+				.fb-mode-tab {
+					background: transparent;
+					border: none;
+					color: var(--fb-text-muted);
+					font-size: 0.95rem;
+					font-weight: 600;
+					padding: 0.6rem 1.2rem;
+					border-radius: 8px;
+					cursor: pointer;
+					display: inline-flex;
+					align-items: center;
+					gap: 0.5rem;
+					transition: all 0.2s ease;
+				}
+
+				.fb-mode-tab:hover {
+					color: #fff;
+					background: rgba(255, 255, 255, 0.05);
+				}
+
+				.fb-mode-tab.active {
+					color: #60a5fa;
+					background: rgba(59, 130, 246, 0.12);
+					box-shadow: inset 0 -2px 0 #3b82f6;
+				}
+
+				/* Allowed Keywords Bar */
+				.allowed-keywords-bar {
+					background: rgba(15, 23, 42, 0.65);
+					border: 1px solid rgba(255, 255, 255, 0.08);
+					border-radius: 8px;
+					padding: 0.6rem 0.9rem;
+					display: flex;
+					flex-wrap: wrap;
+					align-items: center;
+					gap: 0.45rem;
+					margin-bottom: 1.25rem;
+				}
+
+				.allowed-keywords-label {
+					font-size: 0.8rem;
+					color: #94a3b8;
+					font-weight: 600;
+					display: inline-flex;
+					align-items: center;
+					gap: 0.35rem;
+					margin-right: 0.25rem;
+				}
+
+				.keyword-chip {
+					font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+					font-size: 0.76rem;
+					padding: 0.2rem 0.55rem;
+					background: rgba(59, 130, 246, 0.1);
+					border: 1px solid rgba(59, 130, 246, 0.25);
+					color: #93c5fd;
+					border-radius: 5px;
+					cursor: pointer;
+					transition: all 0.18s ease;
+					user-select: none;
+				}
+
+				.keyword-chip:hover {
+					background: rgba(59, 130, 246, 0.28);
+					border-color: #60a5fa;
+					color: #ffffff;
+					transform: translateY(-1px);
+				}
+
+				/* Visual Composer Grid */
+				.vis-composer-grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+					gap: 1.25rem;
+					margin-bottom: 1.25rem;
+				}
+
+				.vis-card {
+					background: rgba(17, 24, 39, 0.55);
+					border: 1px solid rgba(255, 255, 255, 0.08);
+					border-radius: 10px;
+					padding: 1.1rem;
+					display: flex;
+					flex-direction: column;
+					gap: 0.75rem;
+					transition: border-color 0.2s ease, box-shadow 0.2s ease;
+				}
+
+				.vis-card:hover {
+					border-color: rgba(255, 255, 255, 0.16);
+				}
+
+				.vis-card.highlight-flash {
+					border-color: #3b82f6;
+					box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+				}
+
+				.vis-card-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+				}
+
+				.vis-card-title {
+					font-size: 0.82rem;
+					font-weight: 700;
+					text-transform: uppercase;
+					letter-spacing: 0.05em;
+					color: #93c5fd;
+					display: flex;
+					align-items: center;
+					gap: 0.45rem;
+				}
+
+				.vis-card-hint {
+					font-size: 0.75rem;
+					color: var(--fb-text-muted);
+				}
+
+				.vis-chip-group {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 0.45rem;
+				}
+
+				.vis-chip {
+					background: rgba(255, 255, 255, 0.05);
+					border: 1px solid rgba(255, 255, 255, 0.12);
+					color: #cbd5e1;
+					padding: 0.4rem 0.8rem;
+					border-radius: 6px;
+					font-size: 0.82rem;
+					font-weight: 500;
+					cursor: pointer;
+					display: inline-flex;
+					align-items: center;
+					gap: 0.35rem;
+					transition: all 0.15s ease;
+					user-select: none;
+				}
+
+				.vis-chip:hover {
+					background: rgba(255, 255, 255, 0.1);
+					color: #fff;
+					border-color: rgba(255, 255, 255, 0.25);
+				}
+
+				.vis-chip.active {
+					background: #2563eb;
+					border-color: #60a5fa;
+					color: #ffffff;
+					font-weight: 600;
+					box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+				}
+
+				.vis-chip.active-fav {
+					background: #dc2626;
+					border-color: #f87171;
+					color: #ffffff;
+					box-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
+				}
+
+				.vis-chip.active-star {
+					background: #d97706;
+					border-color: #fbbf24;
+					color: #ffffff;
+					box-shadow: 0 0 10px rgba(217, 119, 6, 0.4);
+				}
+
+				.vis-input {
+					background: rgba(9, 13, 22, 0.8);
+					border: 1px solid rgba(255, 255, 255, 0.12);
+					color: #f3f4f6;
+					padding: 0.45rem 0.75rem;
+					border-radius: 6px;
+					font-size: 0.85rem;
+					outline: none;
+					width: 100%;
+					box-sizing: border-box;
+					transition: border-color 0.2s, box-shadow 0.2s;
+				}
+
+				.vis-input:focus {
+					border-color: var(--fb-accent);
+					box-shadow: 0 0 0 2px var(--fb-accent-glow);
+				}
+
+				.vis-input::placeholder {
+					color: #64748b;
+				}
+
+				.vis-field-row {
+					display: flex;
+					gap: 0.6rem;
+					align-items: center;
+				}
+
+				.vis-field-col {
+					display: flex;
+					flex-direction: column;
+					gap: 0.25rem;
+					flex: 1;
+				}
+
+				.vis-field-label {
+					font-size: 0.72rem;
+					color: var(--fb-text-muted);
+					text-transform: uppercase;
+					letter-spacing: 0.04em;
+					font-weight: 600;
+				}
+
+				/* Live Generated JSON Box */
+				.vis-live-json-wrapper {
+					background: rgba(9, 13, 22, 0.9);
+					border: 1px solid rgba(255, 255, 255, 0.08);
+					border-radius: 8px;
+					margin-bottom: 1.25rem;
+					overflow: hidden;
+				}
+
+				.vis-live-json-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 0.5rem 0.85rem;
+					background: rgba(255, 255, 255, 0.03);
+					border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+					font-size: 0.78rem;
+					color: var(--fb-text-muted);
+					cursor: pointer;
+					user-select: none;
+				}
+
+				.vis-live-json-header:hover {
+					background: rgba(255, 255, 255, 0.05);
+					color: #cbd5e1;
+				}
+
+				.vis-live-json-code {
+					padding: 0.75rem 1rem;
+					font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+					font-size: 0.82rem;
+					color: #67e8f9;
+					white-space: pre-wrap;
+					margin: 0;
+					max-height: 140px;
+					overflow-y: auto;
+				}
+
+				.btn-clear-filters {
+					background: rgba(255, 255, 255, 0.06);
+					border: 1px solid rgba(255, 255, 255, 0.12);
+					color: #cbd5e1;
+					padding: 0.6rem 1.1rem;
+					border-radius: 8px;
+					font-size: 0.9rem;
+					font-weight: 500;
+					cursor: pointer;
+					display: inline-flex;
+					align-items: center;
+					gap: 0.4rem;
+					transition: all 0.2s ease;
+				}
+
+				.btn-clear-filters:hover {
+					background: rgba(239, 68, 68, 0.15);
+					border-color: rgba(239, 68, 68, 0.35);
+					color: #fca5a5;
+				}
+
 				/* Loading Indicator */
 				.htmx-indicator {
 					display: none;
@@ -595,28 +875,20 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 			<main class="filter-builder-container">
 				<!-- Filter Editor Section -->
 				<section class="filter-builder-editor-section">
-					<!-- Quick Presets -->
-					<div class="filter-builder-presets-bar">
-						<span class="filter-builder-presets-label">Presets:</span>
-						<button type="button" class="btn-preset" onclick="setPreset('favorites')">
-							<span>♥ Favorites</span>
+					<!-- Mode Switcher Tabs -->
+					<div class="fb-mode-tabs" role="tablist">
+						<button type="button" id="tab-btn-visual" class="fb-mode-tab active" onclick="switchMode('visual')">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+							</svg>
+							<span>✨ Visual Click & Select</span>
 						</button>
-						<button type="button" class="btn-preset" onclick="setPreset('japan_rating')">
-							<span>🗾 Japan & 4+ ★</span>
-						</button>
-						<button type="button" class="btn-preset" onclick="setPreset('tokyo_or_kyoto')">
-							<span>🔀 OR (Tokyo / Kyoto)</span>
-						</button>
-						if len(d.Users) > 1 {
-							<button type="button" class="btn-preset" onclick="setPreset('multi_user')">
-								<span>👥 Multi-User Map</span>
-							</button>
-						}
-						<button type="button" class="btn-preset" onclick="setPreset('taken_recent')">
-							<span>📅 Year 2024</span>
-						</button>
-						<button type="button" class="btn-preset" onclick="setPreset('videos')">
-							<span>▶ Videos Only</span>
+						<button type="button" id="tab-btn-raw" class="fb-mode-tab" onclick="switchMode('raw')">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="16 18 22 12 16 6"></polyline>
+								<polyline points="8 6 2 12 8 18"></polyline>
+							</svg>
+							<span>💻 Raw JSON Payload</span>
 						</button>
 					</div>
 
@@ -634,6 +906,219 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 						if d.ViewData.Config.Kiosk.Password != "" {
 							<input type="hidden" name="password" value={ d.ViewData.Config.Kiosk.Password }/>
 						}
+
+						<!-- VISUAL BUILDER PANEL (DEFAULT) -->
+						<div id="visual-builder-panel">
+							<!-- Allowed Keywords Reference Bar -->
+							<div class="allowed-keywords-bar">
+								<span class="allowed-keywords-label">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<circle cx="12" cy="12" r="10"></circle>
+										<line x1="12" y1="16" x2="12" y2="12"></line>
+										<line x1="12" y1="8" x2="12.01" y2="8"></line>
+									</svg>
+									Allowed Filter Keys:
+								</span>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-fav')">+ isFavorite</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-rating')">+ rating</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-media')">+ type</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-media')">+ isMotion</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-location')">+ country</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-location')">+ state</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-location')">+ city</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-date')">+ takenAt</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-people')">+ withPeople</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-people')">+ isNotInAlbum</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('card-camera')">+ makeModel</button>
+								<button type="button" class="keyword-chip" onclick="highlightCard('raw-hint-or')">+ or (branches)</button>
+							</div>
+
+							<!-- Visual Composer Grid -->
+							<div class="vis-composer-grid">
+								<!-- Card 1: Favorites -->
+								<div id="card-fav" class="vis-card">
+									<div class="vis-card-header">
+										<span class="vis-card-title">
+											<span>❤️</span> Favorites
+										</span>
+										<span class="vis-card-hint">isFavorite</span>
+									</div>
+									<div class="vis-chip-group">
+										<button type="button" id="chip-fav-any" class="vis-chip active" onclick="setFavorite('any')">All Assets</button>
+										<button type="button" id="chip-fav-true" class="vis-chip" onclick="setFavorite('true')">♥ Favorites Only</button>
+										<button type="button" id="chip-fav-false" class="vis-chip" onclick="setFavorite('false')">🤍 Non-Favorites</button>
+									</div>
+								</div>
+
+								<!-- Card 2: Media Type -->
+								<div id="card-media" class="vis-card">
+									<div class="vis-card-header">
+										<span class="vis-card-title">
+											<span>🎬</span> Media Type
+										</span>
+										<span class="vis-card-hint">type / isMotion</span>
+									</div>
+									<div class="vis-chip-group">
+										<button type="button" id="chip-type-any" class="vis-chip active" onclick="setMediaType('any')">All Media</button>
+										<button type="button" id="chip-type-image" class="vis-chip" onclick="setMediaType('IMAGE')">📷 Photos</button>
+										<button type="button" id="chip-type-video" class="vis-chip" onclick="setMediaType('VIDEO')">🎥 Videos</button>
+										<button type="button" id="chip-type-motion" class="vis-chip" onclick="setMediaType('MOTION')">⚡ Live / Motion</button>
+									</div>
+								</div>
+
+								<!-- Card 3: Rating -->
+								<div id="card-rating" class="vis-card">
+									<div class="vis-card-header">
+										<span class="vis-card-title">
+											<span>⭐</span> Minimum Rating
+										</span>
+										<span class="vis-card-hint">rating: 1-5</span>
+									</div>
+									<div class="vis-chip-group">
+										<button type="button" id="chip-rating-0" class="vis-chip active" onclick="setRating(0)">Any</button>
+										<button type="button" id="chip-rating-1" class="vis-chip" onclick="setRating(1)">★ 1+</button>
+										<button type="button" id="chip-rating-2" class="vis-chip" onclick="setRating(2)">★ 2+</button>
+										<button type="button" id="chip-rating-3" class="vis-chip" onclick="setRating(3)">★ 3+</button>
+										<button type="button" id="chip-rating-4" class="vis-chip" onclick="setRating(4)">★ 4+</button>
+										<button type="button" id="chip-rating-5" class="vis-chip" onclick="setRating(5)">★ 5 Only</button>
+									</div>
+								</div>
+
+								<!-- Card 4: Date Taken -->
+								<div id="card-date" class="vis-card">
+									<div class="vis-card-header">
+										<span class="vis-card-title">
+											<span>📅</span> Date Taken
+										</span>
+										<span class="vis-card-hint">takenAt range</span>
+									</div>
+									<div class="vis-chip-group">
+										<button type="button" id="chip-date-any" class="vis-chip active" onclick="setDatePreset('any')">Any Time</button>
+										<button type="button" id="chip-date-2025" class="vis-chip" onclick="setDatePreset('2025')">2025</button>
+										<button type="button" id="chip-date-2024" class="vis-chip" onclick="setDatePreset('2024')">2024</button>
+										<button type="button" id="chip-date-2023" class="vis-chip" onclick="setDatePreset('2023')">2023</button>
+										<button type="button" id="chip-date-custom" class="vis-chip" onclick="setDatePreset('custom')">Custom Range</button>
+									</div>
+									<div id="vis-custom-date-row" class="vis-field-row" style="margin-top: 0.25rem;">
+										<div class="vis-field-col">
+											<span class="vis-field-label">From Date</span>
+											<input type="date" id="vis-date-from" class="vis-input" onchange="onDateInputChange()"/>
+										</div>
+										<div class="vis-field-col">
+											<span class="vis-field-label">To Date</span>
+											<input type="date" id="vis-date-to" class="vis-input" onchange="onDateInputChange()"/>
+										</div>
+									</div>
+								</div>
+
+								<!-- Card 5: Location -->
+								<div id="card-location" class="vis-card">
+									<div class="vis-card-header">
+										<span class="vis-card-title">
+											<span>📍</span> Location
+										</span>
+										<span class="vis-card-hint">country, state, city</span>
+									</div>
+									<div class="vis-chip-group">
+										<button type="button" class="vis-chip" onclick="setCountryChip('Japan')">Japan</button>
+										<button type="button" class="vis-chip" onclick="setCountryChip('Italy')">Italy</button>
+										<button type="button" class="vis-chip" onclick="setCountryChip('Germany')">Germany</button>
+										<button type="button" class="vis-chip" onclick="setCountryChip('France')">France</button>
+										<button type="button" class="vis-chip" onclick="setCountryChip('United States')">USA</button>
+										<button type="button" class="vis-chip" onclick="setCountryChip('Brazil')">Brazil</button>
+										<button type="button" class="vis-chip" onclick="setCountryChip('Spain')">Spain</button>
+										<button type="button" class="vis-chip" onclick="setCountryChip('United Kingdom')">UK</button>
+									</div>
+									<input type="text" id="vis-country" class="vis-input" placeholder="Country name (e.g. Japan, Germany)" oninput="onLocationInputChange()"/>
+									<div class="vis-field-row">
+										<input type="text" id="vis-state" class="vis-input" placeholder="State/Region (e.g. Bavaria, California)" oninput="onLocationInputChange()"/>
+										<input type="text" id="vis-city" class="vis-input" placeholder="City (e.g. Tokyo, Rome, Munich)" oninput="onLocationInputChange()"/>
+									</div>
+								</div>
+
+								<!-- Card 6: People & Albums -->
+								<div id="card-people" class="vis-card">
+									<div class="vis-card-header">
+										<span class="vis-card-title">
+											<span>👥</span> People & Albums
+										</span>
+										<span class="vis-card-hint">withPeople, isNotInAlbum</span>
+									</div>
+									<div class="vis-chip-group">
+										<button type="button" id="chip-people-any" class="vis-chip active" onclick="setPeople('any')">Any</button>
+										<button type="button" id="chip-people-true" class="vis-chip" onclick="setPeople('true')">👤 With People</button>
+										<button type="button" id="chip-people-false" class="vis-chip" onclick="setPeople('false')">🏞️ Landscape / No People</button>
+									</div>
+									<div class="vis-chip-group" style="margin-top: 0.25rem;">
+										<button type="button" id="chip-album-any" class="vis-chip active" onclick="setAlbumStatus(false)">All Albums</button>
+										<button type="button" id="chip-album-notin" class="vis-chip" onclick="setAlbumStatus(true)">📁 Not In Any Album</button>
+									</div>
+								</div>
+
+								<!-- Card 7: Camera & Device -->
+								<div id="card-camera" class="vis-card">
+									<div class="vis-card-header">
+										<span class="vis-card-title">
+											<span>📷</span> Camera / Hardware
+										</span>
+										<span class="vis-card-hint">makeModel</span>
+									</div>
+									<input type="text" id="vis-camera" class="vis-input" placeholder="Camera/Phone model (e.g. iPhone, Sony, Canon, Pixel)" oninput="onCameraInputChange()"/>
+								</div>
+							</div>
+
+							<!-- Live Generated JSON Box -->
+							<div class="vis-live-json-wrapper">
+								<div class="vis-live-json-header" onclick="toggleLiveJSON()">
+									<div style="display: flex; align-items: center; gap: 0.6rem;">
+										<span style="font-weight: 600; color: #93c5fd;">👁️ Live Compiled Filter:</span>
+										<span id="vis-active-count-badge" class="count-pill" style="font-size: 0.72rem; padding: 0.1rem 0.45rem;">0 active rules</span>
+									</div>
+									<span id="vis-live-json-toggle-text">▾ Click to collapse</span>
+								</div>
+								<pre id="vis-live-json-code" class="vis-live-json-code">{}</pre>
+							</div>
+						</div>
+
+						<!-- RAW JSON PANEL (ADVANCED) -->
+						<div id="json-builder-panel" style="display: none;">
+							<!-- Quick Presets -->
+							<div class="filter-builder-presets-bar">
+								<span class="filter-builder-presets-label">Presets:</span>
+								<button type="button" class="btn-preset" onclick="setPreset('favorites')">
+									<span>♥ Favorites</span>
+								</button>
+								<button type="button" class="btn-preset" onclick="setPreset('japan_rating')">
+									<span>🗾 Japan & 4+ ★</span>
+								</button>
+								<button type="button" class="btn-preset" onclick="setPreset('tokyo_or_kyoto')">
+									<span>🔀 OR (Tokyo / Kyoto)</span>
+								</button>
+								if len(d.Users) > 1 {
+									<button type="button" class="btn-preset" onclick="setPreset('multi_user')">
+										<span>👥 Multi-User Map</span>
+									</button>
+								}
+								<button type="button" class="btn-preset" onclick="setPreset('taken_recent')">
+									<span>📅 Year 2024</span>
+								</button>
+								<button type="button" class="btn-preset" onclick="setPreset('videos')">
+									<span>▶ Videos Only</span>
+								</button>
+							</div>
+
+							<div class="filter-builder-textarea-wrapper">
+								<textarea
+									id="filter-textarea"
+									name="filter"
+									class="filter-builder-textarea"
+									spellcheck="false"
+									placeholder="Enter JSON filter payload..."
+								>{ d.InitialFilter }</textarea>
+							</div>
+						</div>
+
+						<!-- SHARED CONTROLS & SUBMIT BAR -->
 						<div class="filter-builder-controls-row">
 							<div class="filter-builder-dropdowns">
 								if len(d.Users) > 1 {
@@ -663,19 +1148,14 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 								</div>
 							</div>
 
-							<button type="button" class="filter-builder-btn-format" onclick="formatJSON()">
-								<span>{ } Format JSON</span>
-							</button>
-						</div>
-
-						<div class="filter-builder-textarea-wrapper">
-							<textarea
-								id="filter-textarea"
-								name="filter"
-								class="filter-builder-textarea"
-								spellcheck="false"
-								placeholder="Enter JSON filter payload..."
-							>{ d.InitialFilter }</textarea>
+							<div style="display: flex; gap: 0.5rem; align-items: center;">
+								<button type="button" id="btn-format-json" class="filter-builder-btn-format" style="display: none;" onclick="formatJSON()">
+									<span>{ } Format JSON</span>
+								</button>
+								<button type="button" class="btn-clear-filters" onclick="clearAllFilters()">
+									<span>↺ Reset All</span>
+								</button>
+							</div>
 						</div>
 
 						<div class="filter-builder-actions-row">
@@ -691,7 +1171,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 								<span>Querying Immich API...</span>
 							</div>
 
-							<span class="filter-builder-hint">Supports boolean OR branches, operator objects (eq, in, gte), and per-user filter maps.</span>
+							<span id="raw-hint-or" class="filter-builder-hint">Select options above or switch to Raw JSON for custom multi-branch queries.</span>
 						</div>
 					</form>
 				</section>
@@ -729,6 +1209,327 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 						type: "VIDEO"
 					}, null, 2)
 				};
+
+				// Visual Builder State
+				const visState = {
+					favorite: 'any',    // 'any', 'true', 'false'
+					type: 'any',        // 'any', 'IMAGE', 'VIDEO', 'MOTION'
+					rating: 0,          // 0, 1, 2, 3, 4, 5
+					country: '',
+					state: '',
+					city: '',
+					datePreset: 'any',  // 'any', '2025', '2024', '2023', 'custom'
+					dateFrom: '',
+					dateTo: '',
+					people: 'any',      // 'any', 'true', 'false'
+					notInAlbum: false,
+					camera: ''
+				};
+
+				let currentMode = 'visual';
+
+				function switchMode(mode) {
+					currentMode = mode;
+					const visPanel = document.getElementById("visual-builder-panel");
+					const jsonPanel = document.getElementById("json-builder-panel");
+					const tabVisual = document.getElementById("tab-btn-visual");
+					const tabRaw = document.getElementById("tab-btn-raw");
+					const btnFormat = document.getElementById("btn-format-json");
+
+					if (mode === 'visual') {
+						if (visPanel) visPanel.style.display = "block";
+						if (jsonPanel) jsonPanel.style.display = "none";
+						if (tabVisual) tabVisual.classList.add("active");
+						if (tabRaw) tabRaw.classList.remove("active");
+						if (btnFormat) btnFormat.style.display = "none";
+						updateVisualFromJSON();
+					} else {
+						if (visPanel) visPanel.style.display = "none";
+						if (jsonPanel) jsonPanel.style.display = "block";
+						if (tabVisual) tabVisual.classList.remove("active");
+						if (tabRaw) tabRaw.classList.add("active");
+						if (btnFormat) btnFormat.style.display = "inline-flex";
+						updateJSONFromVisual();
+					}
+				}
+
+				function highlightCard(cardId) {
+					const el = document.getElementById(cardId);
+					if (el) {
+						el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+						el.classList.add('highlight-flash');
+						setTimeout(() => el.classList.remove('highlight-flash'), 1200);
+					}
+				}
+
+				function setFavorite(val) {
+					visState.favorite = val;
+					['any', 'true', 'false'].forEach(k => {
+						const chip = document.getElementById('chip-fav-' + k);
+						if (!chip) return;
+						chip.classList.toggle('active', k === val && k !== 'true');
+						chip.classList.toggle('active-fav', k === val && k === 'true');
+					});
+					updateJSONFromVisual();
+					runSimulation();
+				}
+
+				function setMediaType(val) {
+					visState.type = val;
+					const map = { any: 'any', IMAGE: 'image', VIDEO: 'video', MOTION: 'motion' };
+					Object.keys(map).forEach(k => {
+						const chip = document.getElementById('chip-type-' + map[k]);
+						if (chip) chip.classList.toggle('active', k === val);
+					});
+					updateJSONFromVisual();
+					runSimulation();
+				}
+
+				function setRating(val) {
+					visState.rating = val;
+					[0, 1, 2, 3, 4, 5].forEach(r => {
+						const chip = document.getElementById('chip-rating-' + r);
+						if (!chip) return;
+						chip.classList.toggle('active', r === val && r === 0);
+						chip.classList.toggle('active-star', r === val && r > 0);
+					});
+					updateJSONFromVisual();
+					runSimulation();
+				}
+
+				function setCountryChip(name) {
+					const input = document.getElementById('vis-country');
+					if (!input) return;
+					if (visState.country.toLowerCase() === name.toLowerCase()) {
+						visState.country = '';
+						input.value = '';
+					} else {
+						visState.country = name;
+						input.value = name;
+					}
+					updateJSONFromVisual();
+					runSimulation();
+				}
+
+				function onLocationInputChange() {
+					const countryEl = document.getElementById('vis-country');
+					const stateEl = document.getElementById('vis-state');
+					const cityEl = document.getElementById('vis-city');
+					if (countryEl) visState.country = countryEl.value.trim();
+					if (stateEl) visState.state = stateEl.value.trim();
+					if (cityEl) visState.city = cityEl.value.trim();
+					updateJSONFromVisual();
+				}
+
+				function setDatePreset(preset) {
+					visState.datePreset = preset;
+					['any', '2025', '2024', '2023', 'custom'].forEach(p => {
+						const chip = document.getElementById('chip-date-' + p);
+						if (chip) chip.classList.toggle('active', p === preset);
+					});
+					const customRow = document.getElementById('vis-custom-date-row');
+					if (customRow) {
+						customRow.style.display = preset === 'custom' ? 'flex' : 'none';
+					}
+					updateJSONFromVisual();
+					runSimulation();
+				}
+
+				function onDateInputChange() {
+					const fromEl = document.getElementById('vis-date-from');
+					const toEl = document.getElementById('vis-date-to');
+					if (fromEl) visState.dateFrom = fromEl.value;
+					if (toEl) visState.dateTo = toEl.value;
+					updateJSONFromVisual();
+				}
+
+				function setPeople(val) {
+					visState.people = val;
+					['any', 'true', 'false'].forEach(k => {
+						const chip = document.getElementById('chip-people-' + k);
+						if (chip) chip.classList.toggle('active', k === val);
+					});
+					updateJSONFromVisual();
+					runSimulation();
+				}
+
+				function setAlbumStatus(notInAlbum) {
+					visState.notInAlbum = notInAlbum;
+					const anyChip = document.getElementById('chip-album-any');
+					const notInChip = document.getElementById('chip-album-notin');
+					if (anyChip) anyChip.classList.toggle('active', !notInAlbum);
+					if (notInChip) notInChip.classList.toggle('active', notInAlbum);
+					updateJSONFromVisual();
+					runSimulation();
+				}
+
+				function onCameraInputChange() {
+					const cameraEl = document.getElementById('vis-camera');
+					if (cameraEl) visState.camera = cameraEl.value.trim();
+					updateJSONFromVisual();
+				}
+
+				function toggleLiveJSON() {
+					const code = document.getElementById('vis-live-json-code');
+					const toggleText = document.getElementById('vis-live-json-toggle-text');
+					if (!code) return;
+					if (code.style.display === 'none') {
+						code.style.display = 'block';
+						if (toggleText) toggleText.textContent = '▾ Click to collapse';
+					} else {
+						code.style.display = 'none';
+						if (toggleText) toggleText.textContent = '▸ Click to expand';
+					}
+				}
+
+				function updateJSONFromVisual() {
+					const payload = {};
+					let activeCount = 0;
+
+					if (visState.favorite === 'true') { payload.isFavorite = true; activeCount++; }
+					else if (visState.favorite === 'false') { payload.isFavorite = false; activeCount++; }
+
+					if (visState.type === 'IMAGE') { payload.type = 'IMAGE'; activeCount++; }
+					else if (visState.type === 'VIDEO') { payload.type = 'VIDEO'; activeCount++; }
+					else if (visState.type === 'MOTION') { payload.isMotion = true; activeCount++; }
+
+					if (visState.rating > 0) {
+						activeCount++;
+						if (visState.rating === 5) {
+							payload.rating = 5;
+						} else {
+							payload.rating = { gte: visState.rating };
+						}
+					}
+
+					if (visState.country) { payload.country = visState.country; activeCount++; }
+					if (visState.state) { payload.state = visState.state; activeCount++; }
+					if (visState.city) { payload.city = visState.city; activeCount++; }
+
+					if (visState.datePreset === '2025') {
+						payload.takenAt = { gte: '2025-01-01T00:00:00Z', lte: '2025-12-31T23:59:59Z' };
+						activeCount++;
+					} else if (visState.datePreset === '2024') {
+						payload.takenAt = { gte: '2024-01-01T00:00:00Z', lte: '2024-12-31T23:59:59Z' };
+						activeCount++;
+					} else if (visState.datePreset === '2023') {
+						payload.takenAt = { gte: '2023-01-01T00:00:00Z', lte: '2023-12-31T23:59:59Z' };
+						activeCount++;
+					} else if (visState.datePreset === 'custom') {
+						const dateObj = {};
+						if (visState.dateFrom) dateObj.gte = visState.dateFrom + 'T00:00:00Z';
+						if (visState.dateTo) dateObj.lte = visState.dateTo + 'T23:59:59Z';
+						if (Object.keys(dateObj).length > 0) {
+							payload.takenAt = dateObj;
+							activeCount++;
+						}
+					}
+
+					if (visState.people === 'true') { payload.withPeople = true; activeCount++; }
+					else if (visState.people === 'false') { payload.withPeople = false; activeCount++; }
+
+					if (visState.notInAlbum) { payload.isNotInAlbum = true; activeCount++; }
+					if (visState.camera) { payload.makeModel = visState.camera; activeCount++; }
+
+					const formatted = JSON.stringify(payload, null, 2);
+					const textarea = document.getElementById('filter-textarea');
+					if (textarea) textarea.value = formatted;
+
+					const liveCode = document.getElementById('vis-live-json-code');
+					if (liveCode) liveCode.textContent = formatted;
+
+					const countBadge = document.getElementById('vis-active-count-badge');
+					if (countBadge) {
+						countBadge.textContent = activeCount === 1 ? '1 active rule' : activeCount + ' active rules';
+					}
+				}
+
+				function updateVisualFromJSON() {
+					const textarea = document.getElementById('filter-textarea');
+					if (!textarea) return;
+					try {
+						const data = JSON.parse(textarea.value || '{}');
+						// favorites
+						if (data.isFavorite === true) setFavorite('true');
+						else if (data.isFavorite === false) setFavorite('false');
+						else setFavorite('any');
+
+						// media
+						if (data.isMotion === true) setMediaType('MOTION');
+						else if (data.type === 'IMAGE') setMediaType('IMAGE');
+						else if (data.type === 'VIDEO') setMediaType('VIDEO');
+						else setMediaType('any');
+
+						// rating
+						if (data.rating !== undefined) {
+							if (typeof data.rating === 'number') setRating(data.rating);
+							else if (data.rating && data.rating.gte) setRating(data.rating.gte);
+							else setRating(0);
+						} else {
+							setRating(0);
+						}
+
+						// location
+						visState.country = data.country || '';
+						visState.state = data.state || '';
+						visState.city = data.city || '';
+						const countryEl = document.getElementById('vis-country');
+						if (countryEl) countryEl.value = visState.country;
+						const stateEl = document.getElementById('vis-state');
+						if (stateEl) stateEl.value = visState.state;
+						const cityEl = document.getElementById('vis-city');
+						if (cityEl) cityEl.value = visState.city;
+
+						// people
+						if (data.withPeople === true) setPeople('true');
+						else if (data.withPeople === false) setPeople('false');
+						else setPeople('any');
+
+						// album
+						setAlbumStatus(data.isNotInAlbum === true);
+
+						// camera
+						visState.camera = data.makeModel || '';
+						const cameraEl = document.getElementById('vis-camera');
+						if (cameraEl) cameraEl.value = visState.camera;
+
+						updateJSONFromVisual();
+					} catch (e) {
+						// Invalid JSON in raw textarea, ignore sync to visual
+					}
+				}
+
+				function clearAllFilters() {
+					visState.favorite = 'any';
+					visState.type = 'any';
+					visState.rating = 0;
+					visState.country = '';
+					visState.state = '';
+					visState.city = '';
+					visState.datePreset = 'any';
+					visState.dateFrom = '';
+					visState.dateTo = '';
+					visState.people = 'any';
+					visState.notInAlbum = false;
+					visState.camera = '';
+
+					// Reset inputs
+					const ids = ['vis-country', 'vis-state', 'vis-city', 'vis-date-from', 'vis-date-to', 'vis-camera'];
+					ids.forEach(id => {
+						const el = document.getElementById(id);
+						if (el) el.value = '';
+					});
+
+					// Reset chip classes
+					setFavorite('any');
+					setMediaType('any');
+					setRating(0);
+					setDatePreset('any');
+					setPeople('any');
+					setAlbumStatus(false);
+					updateJSONFromVisual();
+					runSimulation();
+				}
 
 				async function runSimulation(event) {
 					if (event) {
@@ -784,6 +1585,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					const textarea = document.getElementById("filter-textarea");
 					if (textarea && presets[key]) {
 						textarea.value = presets[key];
+						updateVisualFromJSON();
 						runSimulation();
 					}
 				}
@@ -815,10 +1617,14 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					}
 				}
 
-				// Auto-run simulation on page load
-				if (document.readyState === "loading") {
-					document.addEventListener("DOMContentLoaded", () => runSimulation());
-				} else {
+				// Initial setup on page load
+				document.addEventListener("DOMContentLoaded", () => {
+					updateVisualFromJSON();
+					runSimulation();
+				});
+
+				if (document.readyState !== "loading") {
+					updateVisualFromJSON();
 					runSimulation();
 				}
 
