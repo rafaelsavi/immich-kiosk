@@ -95,3 +95,42 @@ func TestParseUserFilters_InvalidJSON(t *testing.T) {
 	_, err := ParseUserFilters(raw, nil)
 	assert.Error(t, err)
 }
+
+func TestParseUserFilters_DateFilterCanonical(t *testing.T) {
+	raw := `{
+		"takenAt": {
+			"gte": "2024-01-01T00:00:00Z",
+			"lte": "2024-12-31T23:59:59Z"
+		}
+	}`
+
+	filters, err := ParseUserFilters(raw, []string{"rafael", "maria"})
+	require.NoError(t, err)
+	require.NotNil(t, filters)
+
+	filter, found := filters.ForUser("")
+	assert.True(t, found)
+	assert.False(t, filter.TakenAt.Gte.IsZero())
+	assert.False(t, filter.TakenAt.Lte.IsZero())
+	assert.Equal(t, 2024, filter.TakenAt.Gte.Year())
+	assert.Equal(t, 2024, filter.TakenAt.Lte.Year())
+}
+
+func TestParseUserFilters_TakenAfterBefore(t *testing.T) {
+	raw := `{
+		"takenAfter": "2024-01-01T00:00:00Z",
+		"takenBefore": "2024-12-31T23:59:59Z"
+	}`
+
+	filters, err := ParseUserFilters(raw, []string{"rafael", "maria"})
+	require.NoError(t, err)
+	require.NotNil(t, filters)
+
+	filter, found := filters.ForUser("")
+	assert.True(t, found)
+	assert.False(t, filter.TakenAt.Gte.IsZero())
+	assert.False(t, filter.TakenAt.Lte.IsZero())
+	assert.Equal(t, 2024, filter.TakenAt.Gte.Year())
+	assert.Equal(t, 2024, filter.TakenAt.Lte.Year())
+}
+

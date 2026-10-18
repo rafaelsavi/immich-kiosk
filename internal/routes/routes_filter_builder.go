@@ -60,9 +60,15 @@ func FilterBuilderPage(baseConfig *config.Config, com *common.Common) echo.Handl
 			Config:       requestConfig,
 		}
 
+		initialFilter := strings.TrimSpace(c.QueryParam("filter"))
+		if initialFilter == "" {
+			initialFilter = "{\n  \"isFavorite\": true\n}"
+		}
+
 		filterBuilderData := common.FilterBuilderViewData{
-			ViewData: viewData,
-			Users:    users,
+			ViewData:      viewData,
+			Users:         users,
+			InitialFilter: initialFilter,
 		}
 
 		return Render(c, http.StatusOK, views.FilterBuilder(filterBuilderData))

@@ -152,8 +152,9 @@ type FilterBuilderAssetItem struct {
 }
 
 type FilterBuilderViewData struct {
-	ViewData ViewData
-	Users    []string
+	ViewData      ViewData
+	Users         []string
+	InitialFilter string
 }
 
 type FilterBuilderResultData struct {

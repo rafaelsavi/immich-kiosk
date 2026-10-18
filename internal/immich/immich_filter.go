@@ -1,6 +1,7 @@
 package immich
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -84,7 +85,9 @@ var KnownSearchFilterFields = map[string]bool{
 	"rating":           true,
 	"state":            true,
 	"tagIds":           true,
+	"takenAfter":       true,
 	"takenAt":          true,
+	"takenBefore":      true,
 	"type":             true,
 	"updatedAt":        true,
 	"visibility":       true,
@@ -113,6 +116,38 @@ func ParseUserFilters(rawJSON string, knownUsers []string) (UserFilterMap, error
 		if KnownSearchFilterFields[k] {
 			isSingleFilter = true
 			break
+		}
+	}
+
+	// If any value in rawMap is NOT a JSON object (e.g. string, number, bool, array),
+	// this cannot be a map of username -> SearchFilter (since SearchFilter is always an object).
+	if !isSingleFilter {
+		for _, rawVal := range rawMap {
+			trimmed := bytes.TrimSpace(rawVal)
+			if len(trimmed) > 0 && trimmed[0] != '{' {
+				isSingleFilter = true
+				break
+			}
+		}
+	}
+
+	// Also, if knownUsers are provided and NONE of the keys in rawMap match a known user,
+	// treat it as a single filter.
+	if !isSingleFilter && len(knownUsers) > 0 {
+		hasKnownUser := false
+		for k := range rawMap {
+			for _, u := range knownUsers {
+				if strings.EqualFold(k, u) {
+					hasKnownUser = true
+					break
+				}
+			}
+			if hasKnownUser {
+				break
+			}
+		}
+		if !hasKnownUser {
+			isSingleFilter = true
 		}
 	}
 

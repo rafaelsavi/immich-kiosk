@@ -9,8 +9,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -304,6 +306,102 @@ type DateFilter struct {
 	Ne  time.Time `json:"ne,omitzero"`
 }
 
+func parseFlexibleTime(s string) (time.Time, error) {
+	s = strings.TrimSpace(s)
+	formats := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	}
+	for _, f := range formats {
+		if t, err := time.Parse(f, s); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unable to parse date string: %q", s)
+}
+
+func (d *DateFilter) UnmarshalJSON(data []byte) error {
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		t, err := parseFlexibleTime(strVal)
+		if err != nil {
+			return err
+		}
+		d.Gte = t
+		return nil
+	}
+
+	var raw struct {
+		Eq  any `json:"eq,omitempty"`
+		Gt  any `json:"gt,omitempty"`
+		Gte any `json:"gte,omitempty"`
+		Lt  any `json:"lt,omitempty"`
+		Lte any `json:"lte,omitempty"`
+		Ne  any `json:"ne,omitempty"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	parseVal := func(v any) (time.Time, error) {
+		if v == nil {
+			return time.Time{}, nil
+		}
+		if s, ok := v.(string); ok && s != "" {
+			return parseFlexibleTime(s)
+		}
+		return time.Time{}, fmt.Errorf("invalid date value: %v", v)
+	}
+
+	if raw.Eq != nil {
+		t, err := parseVal(raw.Eq)
+		if err != nil {
+			return err
+		}
+		d.Eq = t
+	}
+	if raw.Gt != nil {
+		t, err := parseVal(raw.Gt)
+		if err != nil {
+			return err
+		}
+		d.Gt = t
+	}
+	if raw.Gte != nil {
+		t, err := parseVal(raw.Gte)
+		if err != nil {
+			return err
+		}
+		d.Gte = t
+	}
+	if raw.Lt != nil {
+		t, err := parseVal(raw.Lt)
+		if err != nil {
+			return err
+		}
+		d.Lt = t
+	}
+	if raw.Lte != nil {
+		t, err := parseVal(raw.Lte)
+		if err != nil {
+			return err
+		}
+		d.Lte = t
+	}
+	if raw.Ne != nil {
+		t, err := parseVal(raw.Ne)
+		if err != nil {
+			return err
+		}
+		d.Ne = t
+	}
+	return nil
+}
+
 type IDsFilter struct {
 	All  []string `json:"all,omitempty,omitzero"`
 	Any  []string `json:"any,omitempty,omitzero"`
@@ -485,6 +583,34 @@ type SearchFilter struct {
 	Type             FilterAssetType        `url:"type,omitempty,omitzero" json:"type,omitzero"`
 	UpdatedAt        DateFilter             `url:"updatedAt,omitempty,omitzero" json:"updatedAt,omitzero"`
 	Visibility       FilterAssetVisibility  `url:"visibility,omitempty,omitzero" json:"visibility,omitzero"`
+}
+
+func (s *SearchFilter) UnmarshalJSON(data []byte) error {
+	type rawSearchFilter SearchFilter
+	var raw struct {
+		rawSearchFilter
+		TakenAfter  any `json:"takenAfter,omitempty"`
+		TakenBefore any `json:"takenBefore,omitempty"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*s = SearchFilter(raw.rawSearchFilter)
+	if raw.TakenAfter != nil {
+		if str, ok := raw.TakenAfter.(string); ok && str != "" {
+			if t, err := parseFlexibleTime(str); err == nil {
+				s.TakenAt.Gte = t
+			}
+		}
+	}
+	if raw.TakenBefore != nil {
+		if str, ok := raw.TakenBefore.(string); ok && str != "" {
+			if t, err := parseFlexibleTime(str); err == nil {
+				s.TakenAt.Lte = t
+			}
+		}
+	}
+	return nil
 }
 
 type SearchRandomBody struct {

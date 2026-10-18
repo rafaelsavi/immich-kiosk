@@ -19,7 +19,6 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 	@HTMLTag(d.ViewData.SystemLang) {
 		<head>
 			@partials.Head(d.ViewData)
-			<script src={ string(templ.URL(fmt.Sprintf("/assets/js/url-builder.%s.js", d.ViewData.KioskVersion))) }></script>
 			<style>
 				:root {
 					--fb-bg: #0f1117;
@@ -623,11 +622,9 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 
 					<form
 						id="filter-builder-form"
-						hx-post="/filter-builder/search"
-						hx-target="#filter-builder-results"
-						hx-swap="outerHTML"
-						hx-trigger="load, submit"
-						hx-indicator="#loading-spinner"
+						action="/filter-builder/search"
+						method="POST"
+						onsubmit="runSimulation(event); return false;"
 						if d.ViewData.Config.Kiosk.Password != "" {
 							hx-headers={ templ.JSONString(map[string]string{
 								"Authorization": fmt.Sprintf("Bearer %s", d.ViewData.Config.Kiosk.Password),
@@ -678,13 +675,11 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 								class="filter-builder-textarea"
 								spellcheck="false"
 								placeholder="Enter JSON filter payload..."
-							>{`{
-  "isFavorite": true
-}`}</textarea>
+							>{ d.InitialFilter }</textarea>
 						</div>
 
 						<div class="filter-builder-actions-row">
-							<button type="submit" class="filter-builder-btn-run">
+							<button type="button" class="filter-builder-btn-run" onclick="runSimulation(event)">
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 									<polygon points="5 3 19 12 5 21 5 3"></polygon>
 								</svg>
@@ -725,22 +720,71 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 						user2: { isFavorite: true, country: "Italy" }
 					}, null, 2),
 					taken_recent: JSON.stringify({
-						takenAfter: "2024-01-01T00:00:00Z",
-						takenBefore: "2024-12-31T23:59:59Z"
+						takenAt: {
+							gte: "2024-01-01T00:00:00Z",
+							lte: "2024-12-31T23:59:59Z"
+						}
 					}, null, 2),
 					videos: JSON.stringify({
 						type: "VIDEO"
 					}, null, 2)
 				};
 
+				async function runSimulation(event) {
+					if (event) {
+						event.preventDefault();
+						event.stopPropagation();
+					}
+					const form = document.getElementById("filter-builder-form");
+					if (!form) return false;
+
+					const spinner = document.getElementById("loading-spinner");
+					if (spinner) spinner.style.display = "inline-flex";
+
+					try {
+						const formData = new FormData(form);
+						const resp = await fetch("/filter-builder/search", {
+							method: "POST",
+							body: formData
+						});
+						if (!resp.ok) {
+							throw new Error("HTTP " + resp.status + " " + resp.statusText);
+						}
+						const html = await resp.text();
+						const target = document.getElementById("filter-builder-results");
+						if (target) {
+							target.outerHTML = html;
+						}
+					} catch (err) {
+						console.error("Simulation request failed:", err);
+						const target = document.getElementById("filter-builder-results");
+						if (target) {
+							target.innerHTML = `
+								<div class="filter-builder-alert filter-builder-alert--error" role="alert">
+									<div class="filter-builder-alert--icon">
+										<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<circle cx="12" cy="12" r="10"></circle>
+											<line x1="12" y1="8" x2="12" y2="12"></line>
+											<line x1="12" y1="16" x2="12.01" y2="16"></line>
+										</svg>
+									</div>
+									<div class="filter-builder-alert--content">
+										<h4>Simulation Request Failed</h4>
+										<p>${err.message}</p>
+									</div>
+								</div>`;
+						}
+					} finally {
+						if (spinner) spinner.style.display = "none";
+					}
+					return false;
+				}
+
 				function setPreset(key) {
 					const textarea = document.getElementById("filter-textarea");
 					if (textarea && presets[key]) {
 						textarea.value = presets[key];
-						const form = document.getElementById("filter-builder-form");
-						if (form) {
-							htmx.trigger(form, "submit");
-						}
+						runSimulation();
 					}
 				}
 
@@ -771,14 +815,18 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					}
 				}
 
+				// Auto-run simulation on page load
+				if (document.readyState === "loading") {
+					document.addEventListener("DOMContentLoaded", () => runSimulation());
+				} else {
+					runSimulation();
+				}
+
 				// Ctrl+Enter / Cmd+Enter runs simulation
 				document.addEventListener("keydown", (e) => {
 					if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-						const form = document.getElementById("filter-builder-form");
-						if (form) {
-							e.preventDefault();
-							htmx.trigger(form, "submit");
-						}
+						e.preventDefault();
+						runSimulation();
 					}
 				});
 			</script>
