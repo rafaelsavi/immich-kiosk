@@ -67,7 +67,7 @@ memories: false # show memories
 ## Advanced Filter (Immich 3.2.0 Search API v2)
 # Overrides legacy buckets with full Immich Search v2 capabilities, supporting
 # boolean AND / OR branching, operator objects, and per-user filter maps.
-# Test interactively with real image thumbnails at /filter-builder (requires enable_url_builder: true).
+# Test interactively with real image thumbnails at /url-builder/filters (requires enable_url_builder: true).
 #
 # Single account filter example:
 # filter: '{"isFavorite": true, "country": "Japan", "rating": {"gte": 4}}'

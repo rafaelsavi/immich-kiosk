@@ -24,6 +24,7 @@
     "date-fns": "^4.1.0",
     "esbuild": "^0.28.0",
     "htmx.org": "^2.0.10",
+    "playwright": "^1.64.1",
     "typescript": "^7.0.1-rc"
   },
   "browserslist": [

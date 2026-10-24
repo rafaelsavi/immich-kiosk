@@ -102,7 +102,7 @@ func FilterBuilderPage(baseConfig *config.Config, com *common.Common) echo.Handl
 	}
 }
 
-// FilterBuilderSearch handles the POST /filter-builder/search request triggered via htmx.
+// FilterBuilderSearch handles the POST /url-builder/filters/search request triggered via htmx.
 func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.HandlerFunc {
 	return func(c *echo.Context) error {
 		requestData, err := InitializeRequestData(c, baseConfig)

@@ -24,7 +24,7 @@ func TestFilterBuilderPage(t *testing.T) {
 
 	cache.Initialize()
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/filter-builder", nil)
+	req := httptest.NewRequest(http.MethodGet, "/url-builder/filters", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
@@ -60,7 +60,7 @@ func TestFilterBuilderSearch_EmptyFilter(t *testing.T) {
 	e := echo.New()
 	form := url.Values{}
 	form.Set("filter", "")
-	req := httptest.NewRequest(http.MethodPost, "/filter-builder/search", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/url-builder/filters/search", strings.NewReader(form.Encode()))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -84,7 +84,7 @@ func TestFilterBuilderSearch_InvalidJSON(t *testing.T) {
 	e := echo.New()
 	form := url.Values{}
 	form.Set("filter", "{invalid-json: true}")
-	req := httptest.NewRequest(http.MethodPost, "/filter-builder/search", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/url-builder/filters/search", strings.NewReader(form.Encode()))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -101,23 +101,4 @@ func TestFilterBuilderSearch_InvalidJSON(t *testing.T) {
 	assert.Contains(t, body, "Invalid Filter JSON")
 }
 
-func TestFilterBuilderRedirect(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/filter-builder?user=testuser&filter=%7B%7D", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	redirectHandler := func(ctx *echo.Context) error {
-		target := "/url-builder/filters"
-		if qs := ctx.Request().URL.RawQuery; qs != "" {
-			target += "?" + qs
-		}
-		return ctx.Redirect(http.StatusMovedPermanently, target)
-	}
-
-	err := redirectHandler(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusMovedPermanently, rec.Code)
-	assert.Equal(t, "/url-builder/filters?user=testuser&filter=%7B%7D", rec.Header().Get("Location"))
-}
 

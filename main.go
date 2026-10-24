@@ -220,14 +220,6 @@ func main() {
 		e.POST("/url-builder/build", routes.BuildURL(baseConfig))
 		e.GET("/url-builder/filters", routes.FilterBuilderPage(baseConfig, c))
 		e.POST("/url-builder/filters/search", routes.FilterBuilderSearch(baseConfig, c))
-		e.GET("/filter-builder", func(ctx *echo.Context) error {
-			target := "/url-builder/filters"
-			if qs := ctx.Request().URL.RawQuery; qs != "" {
-				target += "?" + qs
-			}
-			return ctx.Redirect(http.StatusMovedPermanently, target)
-		})
-		e.POST("/filter-builder/search", routes.FilterBuilderSearch(baseConfig, c))
 	}
 
 	e.GET("/about", routes.About(baseConfig))
