@@ -623,8 +623,8 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 							<div class="playground-card">
 								<div class="playground-card-title">⭐ Core Criteria</div>
 								<div class="playground-field-group">
-									@URLBuilderRadio("Favourites", "favorite", "Filter by favourite status.", "Favourites only", "true", "Non-favourites only", "false")
-									@URLBuilderRadio("Media type", "type", "Filter by asset media type.", "Photos only", "IMAGE", "Videos only", "VIDEO", "Motion photos", "MOTION")
+									@URLBuilderRadioCustomLabel("Favourites", "favorite", "Filter by favourite status. 'Any' includes both favourite and non-favourite assets.", "any", "Favourites only", "true", "Non-favourites only", "false")
+									@URLBuilderRadioCustomLabel("Media type", "type", "Filter by asset media type. 'Default' uses your Kiosk configuration (photos, and videos if enabled).", "default (kiosk config)", "Photos only", "IMAGE", "Videos only", "VIDEO", "Motion photos", "MOTION")
 									@URLBuilderSelect("Minimum star rating", "rating", "Assets must have at least this star rating.", "Any rating", "0", "1+ Stars", "1", "2+ Stars", "2", "3+ Stars", "3", "4+ Stars", "4", "5 Stars only", "5")
 								</div>
 							</div>
@@ -638,7 +638,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 											<option value={ p.ID }>{ p.Name }</option>
 										}
 									}
-									@URLBuilderRadio("People presence", "has_people", "Whether the asset must have recognized people.", "Must have people", "true", "No people", "false")
+									@URLBuilderRadioCustomLabel("People presence", "has_people", "Whether the asset must have recognized people. 'Any' includes assets with or without people.", "any", "Must have people", "true", "No people", "false")
 								</div>
 							</div>
 
@@ -651,7 +651,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 											<option value={ a.ID }>{ a.AlbumName }</option>
 										}
 									}
-									@URLBuilderRadio("Album presence", "has_albums", "Whether the asset must be added to an album.", "Must be in an album", "true", "Not in any album", "false")
+									@URLBuilderRadioCustomLabel("Album presence", "has_albums", "Whether the asset must be added to an album. 'Any' includes assets in or out of albums.", "any", "Must be in an album", "true", "Not in any album", "false")
 
 									@URLBuilderMultiSelect("Tags", "tags", "Assets must have any of the selected tags.") {
 										for _, t := range d.Tags {
@@ -661,7 +661,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 											<option value={ t.ID }>{ t.Name }</option>
 										}
 									}
-									@URLBuilderRadio("Tag presence", "has_tags", "Whether the asset must have tags.", "Must have tags", "true", "No tags", "false")
+									@URLBuilderRadioCustomLabel("Tag presence", "has_tags", "Whether the asset must have tags. 'Any' includes assets with or without tags.", "any", "Must have tags", "true", "No tags", "false")
 								</div>
 							</div>
 

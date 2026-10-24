@@ -332,13 +332,13 @@ templ URLBuilderMultiSelectWithOptions(displayName, formName, helpText string, o
 	@templ.JSFuncCall("urlBuilder.initMultiselect", elementID, displayName, options)
 }
 
-templ URLBuilderRadio(displayName string, formName string, helpText string, keyvals ...string) {
+templ URLBuilderRadioCustomLabel(displayName string, formName string, helpText string, defaultLabel string, keyvals ...string) {
 	<div class="form-group">
 		<legend>{ displayName }</legend>
 		@URLBuilderHelpText(helpText)
 		{{
 			kvs := make([]string, 0, len(keyvals)+2)
-			kvs = append(kvs, "default", "")
+			kvs = append(kvs, defaultLabel, "")
 			kvs = append(kvs, keyvals...)
 		}}
 		<div class="form-group--radio-group">
@@ -358,6 +358,10 @@ templ URLBuilderRadio(displayName string, formName string, helpText string, keyv
 			}
 		</div>
 	</div>
+}
+
+templ URLBuilderRadio(displayName string, formName string, helpText string, keyvals ...string) {
+	@URLBuilderRadioCustomLabel(displayName, formName, helpText, "default", keyvals...)
 }
 
 templ URLBuilderText(displayName, formName, helpText, defaultValue string) {
