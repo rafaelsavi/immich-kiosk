@@ -33,7 +33,11 @@ type CityAssetItem struct {
 // AllLocations fetches assets from the search/cities endpoint and extracts unique
 // countries, states, cities, and camera models to populate select dropdowns in the UI.
 func (a *Asset) AllLocations(requestID, deviceID string) (LocationMetadata, error) {
-	cacheKey := "filter_builder_locations:" + a.requestConfig.ImmichURL
+	userKey := a.requestConfig.SelectedUser
+	if userKey == "" {
+		userKey = a.requestConfig.ImmichAPIKey
+	}
+	cacheKey := "filter_builder_locations:" + a.requestConfig.ImmichURL + ":" + userKey
 	if cached, ok := cache.Get(cacheKey); ok {
 		if locs, ok := cached.(LocationMetadata); ok {
 			return locs, nil

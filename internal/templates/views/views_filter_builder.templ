@@ -534,6 +534,26 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 						});
 					}
 				}
+
+				document.addEventListener('DOMContentLoaded', function() {
+					const userSelect = document.getElementById('url-builder-user');
+					if (userSelect) {
+						userSelect.addEventListener('change', function(e) {
+							e.stopPropagation();
+							const url = new URL(window.location.href);
+							if (this.value && this.value !== 'all') {
+								url.searchParams.set('user', this.value);
+							} else {
+								url.searchParams.delete('user');
+							}
+							const rawFilter = document.getElementById('url-builder-raw-filter');
+							if (rawFilter && rawFilter.value && rawFilter.value.trim() !== '' && rawFilter.value.trim() !== '{}') {
+								url.searchParams.set('filter', rawFilter.value.trim());
+							}
+							window.location.href = url.toString();
+						});
+					}
+				});
 			</script>
 		</head>
 		<body id="url-builder" class="notranslate playground-body">
@@ -590,9 +610,9 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 										<label for="url-builder-user">User Account</label>
 										@URLBuilderHelpText("Run this filter for a specific user API key or across all accounts.")
 										<select id="url-builder-user" name="user">
-											<option value="">All Users (Global filter)</option>
+											<option value="" selected?={ d.SelectedUser == "" || d.SelectedUser == "all" }>All Users (Global filter)</option>
 											for _, u := range d.Users {
-												<option value={ u }>{ u }</option>
+												<option value={ u } selected?={ d.SelectedUser == u }>{ u }</option>
 											}
 										</select>
 									</div>

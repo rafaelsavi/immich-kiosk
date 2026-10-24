@@ -126,7 +126,11 @@ templ FilterBuilderResult(d common.FilterBuilderResultData) {
 			<div class="simulation-gallery-card">
 				<div class="simulation-gallery-header">
 					<span style="font-weight: 700; font-size: 0.95rem; color: #0f172a;">Live Simulation</span>
-					<span class="count-badge">{ strconv.Itoa(d.Total) } matching in Immich (showing { strconv.Itoa(len(d.Assets)) })</span>
+					if d.Total > len(d.Assets) {
+						<span class="count-badge">{ strconv.Itoa(d.Total) } matching in Immich (showing { strconv.Itoa(len(d.Assets)) })</span>
+					} else {
+						<span class="count-badge">Live preview ({ strconv.Itoa(len(d.Assets)) } matching assets)</span>
+					}
 				</div>
 
 				<div class="simulation-grid">

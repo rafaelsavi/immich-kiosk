@@ -497,6 +497,69 @@ func (a *Asset) SearchMetadataWithFilter(ctx context.Context, filter SearchFilte
 	return response, nil
 }
 
+// SearchRandomWithFilter performs a search using a SearchFilter against Immich Search API v2 random endpoint.
+// It returns a slice of randomly sampled assets matching the filter criteria.
+func (a *Asset) SearchRandomWithFilter(ctx context.Context, filter SearchFilter, size int, requestID, deviceID string) ([]Asset, error) {
+	if size <= 0 {
+		size = 24
+	}
+
+	u, err := url.Parse(a.requestConfig.ImmichURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply kiosk-wide constraints if not explicitly set in the filter, matching RandomAssetWithFilter
+	if len(filter.Type.In) == 0 && filter.Type.Eq == "" {
+		filter.Type = FilterAssetType{In: []AssetType{ImageType}}
+		if a.requestConfig.ShowVideos {
+			filter.Type.In = append(filter.Type.In, VideoType)
+		}
+	}
+	if len(filter.Visibility.In) == 0 && filter.Visibility.Eq == "" {
+		filter.Visibility = FilterAssetVisibility{In: []AssetVisibility{Timeline}}
+		if a.requestConfig.ShowArchived {
+			filter.Visibility.In = append(filter.Visibility.In, Archive)
+		}
+	}
+
+	requestBody := SearchRandomBody{
+		Filter:     filter,
+		Size:       size,
+		WithExif:   true,
+		WithPeople: true,
+	}
+
+	apiURL := u.JoinPath(SearchRandomEndpoint)
+
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	apiBody, _, _, err := a.immichAPICall(ctx, http.MethodPost, apiURL.String(), jsonBody)
+	if err != nil {
+		// Fallback to metadata search if random search endpoint is rejected
+		metaResp, metaErr := a.SearchMetadataWithFilter(ctx, filter, size, 1, requestID, deviceID)
+		if metaErr != nil {
+			return nil, err
+		}
+		return metaResp.Assets.Items, nil
+	}
+
+	var randomAssets []Asset
+	if err = json.Unmarshal(apiBody, &randomAssets); err == nil && len(randomAssets) > 0 {
+		return randomAssets, nil
+	}
+
+	var metaResp SearchMetadataResponse
+	if errMeta := json.Unmarshal(apiBody, &metaResp); errMeta == nil && len(metaResp.Assets.Items) > 0 {
+		return metaResp.Assets.Items, nil
+	}
+
+	return randomAssets, nil
+}
+
 // RandomAssetWithFilter retrieves a random asset matching a SearchFilter for the specified user.
 func (a *Asset) RandomAssetWithFilter(userID string, requestID, deviceID string, isPrefetch bool) error {
 	if isPrefetch {

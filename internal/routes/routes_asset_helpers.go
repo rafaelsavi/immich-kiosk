@@ -86,16 +86,29 @@ func gatherAssetBuckets(immichAsset *immich.Asset, requestConfig config.Config, 
 				weight = 100
 			}
 
-			// If filter is global (single key ""), expand across URLParamUsers if specified
+			// If filter is global (single key ""), expand across URLParamUsers if specified,
+			// or expand across all configured users if no specific user was requested in the URL.
 			if len(filters) == 1 {
-				if _, hasGlobal := filters[""]; hasGlobal && len(requestConfig.URLParamUsers) > 0 {
-					for _, u := range requestConfig.URLParamUsers {
-						assets = append(assets, utils.AssetWithWeighting{
-							Asset:  utils.WeightedAsset{Type: kiosk.SourceFilter, ID: u},
-							Weight: weight,
-						})
+				if _, hasGlobal := filters[""]; hasGlobal {
+					usersToExpand := requestConfig.URLParamUsers
+					if len(usersToExpand) == 0 && len(requestConfig.ImmichUsersAPIKeys) > 1 {
+						for u := range requestConfig.ImmichUsersAPIKeys {
+							uClean := strings.TrimSpace(u)
+							if uClean != "" && uClean != "default" {
+								usersToExpand = append(usersToExpand, uClean)
+							}
+						}
+						slices.Sort(usersToExpand)
 					}
-					return assets, nil
+					if len(usersToExpand) > 0 {
+						for _, u := range usersToExpand {
+							assets = append(assets, utils.AssetWithWeighting{
+								Asset:  utils.WeightedAsset{Type: kiosk.SourceFilter, ID: u},
+								Weight: weight,
+							})
+						}
+						return assets, nil
+					}
 				}
 			}
 

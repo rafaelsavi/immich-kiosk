@@ -12,7 +12,9 @@ type FilterBuilderAssetItem struct {
 	User         string
 	Type         string
 	City         string
+	State        string
 	Country      string
+	Model        string
 	TakenAt      string
 	IsFavorite   bool
 	Rating       int
@@ -24,6 +26,7 @@ type FilterBuilderAssetItem struct {
 type FilterBuilderViewData struct {
 	ViewData      ViewData
 	Users         []string
+	SelectedUser  string
 	People        []immich.Person
 	Albums        immich.Albums
 	Tags          immich.Tags

@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"charm.land/log/v2"
@@ -19,6 +20,7 @@ import (
 	"github.com/damongolding/immich-kiosk/internal/templates/partials"
 	"github.com/damongolding/immich-kiosk/internal/templates/views"
 	"github.com/labstack/echo/v5"
+	"golang.org/x/sync/errgroup"
 )
 
 // FilterBuilderPage renders the interactive filter builder and simulation page.
@@ -45,36 +47,162 @@ func FilterBuilderPage(baseConfig *config.Config, com *common.Common) echo.Handl
 			"requestConfig", requestConfig.String(),
 		)
 
-		im := immich.New(com.Context(), requestConfig)
-
-		ppl, pplErr := im.AllNamedPeople(requestID, deviceID)
-		if pplErr != nil {
-			log.Warn("filter builder: fetching people", "err", pplErr)
-		}
-
-		albs, albErr := im.AllAlbums(requestID, deviceID)
-		if albErr != nil {
-			log.Warn("filter builder: fetching albums", "err", albErr)
-		}
-
-		tags, _, tagsErr := im.AllTags(requestID, deviceID)
-		if tagsErr != nil {
-			log.Warn("filter builder: fetching tags", "err", tagsErr)
-		}
-
-		locs, locsErr := im.AllLocations(requestID, deviceID)
-		if locsErr != nil {
-			log.Warn("filter builder: fetching locations", "err", locsErr)
-		}
-
 		var users []string
 		for u := range baseConfig.ImmichUsersAPIKeys {
 			uClean := strings.TrimSpace(u)
-			if uClean != "" {
+			if uClean != "" && uClean != "default" {
 				users = append(users, uClean)
 			}
 		}
 		sort.Strings(users)
+
+		selectedUser := strings.TrimSpace(c.QueryParam("user"))
+		if selectedUser == "all" {
+			selectedUser = ""
+		}
+
+		var usersToFetch []string
+		isMultiUser := false
+
+		if selectedUser != "" {
+			usersToFetch = []string{selectedUser}
+		} else if len(users) > 0 {
+			usersToFetch = users
+			if len(users) > 1 {
+				isMultiUser = true
+			}
+		} else {
+			usersToFetch = []string{""}
+		}
+
+		var g errgroup.Group
+		var mu sync.Mutex
+
+		seenPeopleIDs := make(map[string]bool)
+		seenAlbumIDs := make(map[string]bool)
+		seenTagIDs := make(map[string]bool)
+
+		countrySet := make(map[string]struct{})
+		stateSet := make(map[string]struct{})
+		citySet := make(map[string]struct{})
+		cameraSet := make(map[string]struct{})
+
+		var allPeople []immich.Person
+		var allAlbums immich.Albums
+		var allTags immich.Tags
+
+		for _, u := range usersToFetch {
+			username := u
+			g.Go(func() error {
+				userCfg := requestConfig
+				if username != "" {
+					userCfg.SelectedUser = username
+					if key, ok := baseConfig.ImmichUsersAPIKeys[username]; ok {
+						userCfg.ImmichAPIKey = key
+					}
+				}
+				im := immich.New(com.Context(), userCfg)
+
+				userPeople, pplErr := im.AllNamedPeople(requestID, deviceID)
+				if pplErr != nil {
+					log.Warn("filter builder: fetching people", "user", username, "err", pplErr)
+				}
+
+				userAlbums, albErr := im.AllAlbums(requestID, deviceID)
+				if albErr != nil {
+					log.Warn("filter builder: fetching albums", "user", username, "err", albErr)
+				}
+
+				userTags, _, tagsErr := im.AllTags(requestID, deviceID)
+				if tagsErr != nil {
+					log.Warn("filter builder: fetching tags", "user", username, "err", tagsErr)
+				}
+
+				userLocs, locsErr := im.AllLocations(requestID, deviceID)
+				if locsErr != nil {
+					log.Warn("filter builder: fetching locations", "user", username, "err", locsErr)
+				}
+
+				mu.Lock()
+				defer mu.Unlock()
+
+				for _, p := range userPeople {
+					if !seenPeopleIDs[p.ID] {
+						seenPeopleIDs[p.ID] = true
+						if isMultiUser && username != "" {
+							p.Name = fmt.Sprintf("%s (@%s)", p.Name, username)
+						}
+						allPeople = append(allPeople, p)
+					}
+				}
+
+				for _, a := range userAlbums {
+					if !seenAlbumIDs[a.ID] {
+						seenAlbumIDs[a.ID] = true
+						if isMultiUser && username != "" {
+							a.AlbumName = fmt.Sprintf("%s (@%s)", a.AlbumName, username)
+						}
+						allAlbums = append(allAlbums, a)
+					}
+				}
+
+				for _, t := range userTags {
+					tagKey := t.ID
+					if tagKey == "" {
+						tagKey = strings.ToLower(t.Name)
+					}
+					if !seenTagIDs[tagKey] {
+						seenTagIDs[tagKey] = true
+						allTags = append(allTags, t)
+					}
+				}
+
+				for _, c := range userLocs.Countries {
+					cClean := strings.TrimSpace(c)
+					if cClean != "" {
+						countrySet[cClean] = struct{}{}
+					}
+				}
+				for _, s := range userLocs.States {
+					sClean := strings.TrimSpace(s)
+					if sClean != "" {
+						stateSet[sClean] = struct{}{}
+					}
+				}
+				for _, c := range userLocs.Cities {
+					cClean := strings.TrimSpace(c)
+					if cClean != "" {
+						citySet[cClean] = struct{}{}
+					}
+				}
+				for _, m := range userLocs.Cameras {
+					mClean := strings.TrimSpace(m)
+					if mClean != "" {
+						cameraSet[mClean] = struct{}{}
+					}
+				}
+
+				return nil
+			})
+		}
+		_ = g.Wait()
+
+		sort.Slice(allPeople, func(i, j int) bool {
+			return strings.ToLower(allPeople[i].Name) < strings.ToLower(allPeople[j].Name)
+		})
+
+		sort.Slice(allAlbums, func(i, j int) bool {
+			return strings.ToLower(allAlbums[i].AlbumName) < strings.ToLower(allAlbums[j].AlbumName)
+		})
+
+		sort.Slice(allTags, func(i, j int) bool {
+			return strings.ToLower(allTags[i].Name) < strings.ToLower(allTags[j].Name)
+		})
+
+		countries := mapToSortedSlice(countrySet)
+		states := mapToSortedSlice(stateSet)
+		cities := mapToSortedSlice(citySet)
+		cameras := mapToSortedSlice(cameraSet)
 
 		viewData := common.ViewData{
 			KioskVersion: KioskVersion,
@@ -88,18 +216,28 @@ func FilterBuilderPage(baseConfig *config.Config, com *common.Common) echo.Handl
 		filterBuilderData := common.FilterBuilderViewData{
 			ViewData:      viewData,
 			Users:         users,
-			People:        ppl,
-			Albums:        albs,
-			Tags:          tags,
-			Countries:     locs.Countries,
-			States:        locs.States,
-			Cities:        locs.Cities,
-			Cameras:       locs.Cameras,
+			SelectedUser:  selectedUser,
+			People:        allPeople,
+			Albums:        allAlbums,
+			Tags:          allTags,
+			Countries:     countries,
+			States:        states,
+			Cities:        cities,
+			Cameras:       cameras,
 			InitialFilter: initialFilter,
 		}
 
 		return Render(c, http.StatusOK, views.FilterBuilder(filterBuilderData))
 	}
+}
+
+func mapToSortedSlice(m map[string]struct{}) []string {
+	res := make([]string, 0, len(m))
+	for k := range m {
+		res = append(res, k)
+	}
+	sort.Strings(res)
+	return res
 }
 
 // FilterBuilderSearch handles the POST /url-builder/filters/search request triggered via htmx.
@@ -141,7 +279,7 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 		var knownUsers []string
 		for u := range baseConfig.ImmichUsersAPIKeys {
 			uClean := strings.TrimSpace(u)
-			if uClean != "" {
+			if uClean != "" && uClean != "default" {
 				knownUsers = append(knownUsers, uClean)
 			}
 		}
@@ -350,13 +488,6 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 		}
 
 		// Execute queries against Immich API
-		var items []common.FilterBuilderAssetItem
-		totalCount := 0
-
-		type userQuery struct {
-			user   string
-			filter immich.SearchFilter
-		}
 		var queriesToRun []userQuery
 
 		if selectedUser != "" && selectedUser != "all" {
@@ -404,70 +535,47 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 			}
 		}
 
-		perUserLimit := limit / len(queriesToRun)
-		if perUserLimit < 1 {
-			perUserLimit = 1
-		}
-
+		var g errgroup.Group
+		var mu sync.Mutex
+		userItemLists := make([][]common.FilterBuilderAssetItem, len(queriesToRun))
 		var searchErrors []string
-		for _, q := range queriesToRun {
-			userCfg := requestConfig
-			if q.user != "" {
-				userCfg.SelectedUser = q.user
-			}
 
-			imAsset := immich.New(com.Context(), userCfg)
-			resp, err := imAsset.SearchMetadataWithFilter(context.Background(), q.filter, perUserLimit, 1, requestID, deviceID)
-			if err != nil {
-				log.Error("filter builder search error", "user", q.user, "error", err)
-				searchErrors = append(searchErrors, fmt.Sprintf("Error fetching assets for user %q: %s", q.user, err.Error()))
-				continue
-			}
-
-			totalCount += resp.Assets.Total
-			for _, a := range resp.Assets.Items {
-				thumbnailURL := fmt.Sprintf("/image/%s", a.ID)
-				if q.user != "" {
-					thumbnailURL += fmt.Sprintf("?user=%s", url.QueryEscape(q.user))
+		for idx, query := range queriesToRun {
+			i := idx
+			q := query
+			g.Go(func() error {
+				uItems, err := fetchUserSample(
+					context.Background(),
+					q,
+					baseConfig,
+					requestConfig,
+					com,
+					requestID,
+					deviceID,
+					limit,
+					countries,
+					states,
+					cities,
+					cameras,
+					people,
+					albums,
+					tags,
+				)
+				mu.Lock()
+				defer mu.Unlock()
+				if err != nil {
+					log.Error("filter builder search error", "user", q.user, "error", err)
+					searchErrors = append(searchErrors, fmt.Sprintf("Error fetching assets for user %q: %s", q.user, err.Error()))
+					return nil
 				}
-
-				takenAt := ""
-				if !a.ExifInfo.DateTimeOriginal.IsZero() {
-					takenAt = a.ExifInfo.DateTimeOriginal.Format("2006-01-02 15:04")
-				} else if !a.LocalDateTime.IsZero() {
-					takenAt = a.LocalDateTime.Format("2006-01-02 15:04")
-				}
-
-				var peopleNames []string
-				for _, p := range a.People {
-					name := strings.TrimSpace(p.Name)
-					if name != "" {
-						peopleNames = append(peopleNames, name)
-					}
-				}
-
-				items = append(items, common.FilterBuilderAssetItem{
-					ID:           a.ID,
-					ThumbnailURL: thumbnailURL,
-					User:         q.user,
-					Type:         string(a.Type),
-					City:         a.ExifInfo.City,
-					Country:      a.ExifInfo.Country,
-					TakenAt:      takenAt,
-					IsFavorite:   a.IsFavorite,
-					Rating:       a.ExifInfo.Rating,
-					People:       peopleNames,
-					Filename:     a.OriginalFileName,
-				})
-
-				if len(items) >= limit {
-					break
-				}
-			}
-			if len(items) >= limit {
-				break
-			}
+				userItemLists[i] = uItems
+				return nil
+			})
 		}
+		_ = g.Wait()
+
+		items := balanceAndInterleaveItems(userItemLists, limit, countries, states, cities, cameras)
+		totalCount := len(items)
 
 		errMsg := ""
 		if len(searchErrors) > 0 && len(items) == 0 {
@@ -483,6 +591,378 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 			Error:        errMsg,
 		}))
 	}
+}
+
+type userQuery struct {
+	user   string
+	filter immich.SearchFilter
+}
+
+func fetchUserSample(
+	ctx context.Context,
+	q userQuery,
+	baseConfig *config.Config,
+	requestConfig config.Config,
+	com *common.Common,
+	requestID, deviceID string,
+	limit int,
+	countries, states, cities, cameras, people, albums, tags []string,
+) ([]common.FilterBuilderAssetItem, error) {
+	userCfg := requestConfig
+	if q.user != "" {
+		userCfg.SelectedUser = q.user
+		if key, ok := baseConfig.ImmichUsersAPIKeys[q.user]; ok {
+			userCfg.ImmichAPIKey = key
+		}
+	}
+
+	imAsset := immich.New(com.Context(), userCfg)
+	userAssets, err := imAsset.SearchRandomWithFilter(ctx, q.filter, limit, requestID, deviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if any multi-selected items were starved/missing from the random sample
+	if len(countries) > 1 {
+		hasCountry := make(map[string]bool)
+		for _, a := range userAssets {
+			c := strings.ToLower(strings.TrimSpace(a.ExifInfo.Country))
+			if c != "" {
+				hasCountry[c] = true
+			}
+		}
+		for _, c := range countries {
+			cClean := strings.ToLower(strings.TrimSpace(c))
+			if !hasCountry[cClean] {
+				missingFilter := q.filter
+				missingFilter.Country = immich.StringFilterNullable{Eq: c}
+				if extra, err := imAsset.SearchRandomWithFilter(ctx, missingFilter, 6, requestID, deviceID); err == nil && len(extra) > 0 {
+					userAssets = append(userAssets, extra...)
+				}
+			}
+		}
+	}
+
+	if len(cities) > 1 {
+		hasCity := make(map[string]bool)
+		for _, a := range userAssets {
+			city := strings.ToLower(strings.TrimSpace(a.ExifInfo.City))
+			if city != "" {
+				hasCity[city] = true
+			}
+		}
+		for _, city := range cities {
+			cityClean := strings.ToLower(strings.TrimSpace(city))
+			if !hasCity[cityClean] {
+				missingFilter := q.filter
+				missingFilter.City = immich.StringFilterNullable{Eq: city}
+				if extra, err := imAsset.SearchRandomWithFilter(ctx, missingFilter, 6, requestID, deviceID); err == nil && len(extra) > 0 {
+					userAssets = append(userAssets, extra...)
+				}
+			}
+		}
+	}
+
+	if len(states) > 1 {
+		hasState := make(map[string]bool)
+		for _, a := range userAssets {
+			st := strings.ToLower(strings.TrimSpace(a.ExifInfo.State))
+			if st != "" {
+				hasState[st] = true
+			}
+		}
+		for _, st := range states {
+			stClean := strings.ToLower(strings.TrimSpace(st))
+			if !hasState[stClean] {
+				missingFilter := q.filter
+				missingFilter.State = immich.StringFilterNullable{Eq: st}
+				if extra, err := imAsset.SearchRandomWithFilter(ctx, missingFilter, 6, requestID, deviceID); err == nil && len(extra) > 0 {
+					userAssets = append(userAssets, extra...)
+				}
+			}
+		}
+	}
+
+	if len(cameras) > 1 {
+		hasCamera := make(map[string]bool)
+		for _, a := range userAssets {
+			cam := strings.ToLower(strings.TrimSpace(a.ExifInfo.Model))
+			if cam != "" {
+				hasCamera[cam] = true
+			}
+		}
+		for _, cam := range cameras {
+			camClean := strings.ToLower(strings.TrimSpace(cam))
+			if !hasCamera[camClean] {
+				missingFilter := q.filter
+				missingFilter.Model = immich.StringFilterNullable{Eq: cam}
+				if extra, err := imAsset.SearchRandomWithFilter(ctx, missingFilter, 6, requestID, deviceID); err == nil && len(extra) > 0 {
+					userAssets = append(userAssets, extra...)
+				}
+			}
+		}
+	}
+
+	if len(people) > 1 {
+		hasPerson := make(map[string]bool)
+		for _, a := range userAssets {
+			for _, p := range a.People {
+				hasPerson[p.ID] = true
+			}
+		}
+		for _, pid := range people {
+			if !hasPerson[pid] {
+				missingFilter := q.filter
+				missingFilter.PersonIDs = immich.IDsFilter{Any: []string{pid}}
+				if extra, err := imAsset.SearchRandomWithFilter(ctx, missingFilter, 6, requestID, deviceID); err == nil && len(extra) > 0 {
+					userAssets = append(userAssets, extra...)
+				}
+			}
+		}
+	}
+
+	if len(albums) > 1 {
+		for _, aid := range albums {
+			missingFilter := q.filter
+			missingFilter.AlbumIDs = immich.IDsFilter{Any: []string{aid}}
+			if extra, err := imAsset.SearchRandomWithFilter(ctx, missingFilter, 6, requestID, deviceID); err == nil && len(extra) > 0 {
+				userAssets = append(userAssets, extra...)
+			}
+		}
+	}
+
+	if len(tags) > 1 {
+		for _, tid := range tags {
+			missingFilter := q.filter
+			missingFilter.TagIDs = immich.IDsFilter{Any: []string{tid}}
+			if extra, err := imAsset.SearchRandomWithFilter(ctx, missingFilter, 4, requestID, deviceID); err == nil && len(extra) > 0 {
+				userAssets = append(userAssets, extra...)
+			}
+		}
+	}
+
+	var userItems []common.FilterBuilderAssetItem
+	for _, a := range userAssets {
+		thumbnailURL := fmt.Sprintf("/image/%s", a.ID)
+		if q.user != "" {
+			thumbnailURL += fmt.Sprintf("?user=%s", url.QueryEscape(q.user))
+		}
+
+		takenAt := ""
+		if !a.ExifInfo.DateTimeOriginal.IsZero() {
+			takenAt = a.ExifInfo.DateTimeOriginal.Format("2006-01-02 15:04")
+		} else if !a.LocalDateTime.IsZero() {
+			takenAt = a.LocalDateTime.Format("2006-01-02 15:04")
+		}
+
+		var peopleNames []string
+		for _, p := range a.People {
+			name := strings.TrimSpace(p.Name)
+			if name != "" {
+				peopleNames = append(peopleNames, name)
+			}
+		}
+
+		userItems = append(userItems, common.FilterBuilderAssetItem{
+			ID:           a.ID,
+			ThumbnailURL: thumbnailURL,
+			User:         q.user,
+			Type:         string(a.Type),
+			City:         a.ExifInfo.City,
+			State:        a.ExifInfo.State,
+			Country:      a.ExifInfo.Country,
+			Model:        a.ExifInfo.Model,
+			TakenAt:      takenAt,
+			IsFavorite:   a.IsFavorite,
+			Rating:       a.ExifInfo.Rating,
+			People:       peopleNames,
+			Filename:     a.OriginalFileName,
+		})
+	}
+
+	return userItems, nil
+}
+
+func balanceAndInterleaveItems(
+	userItemLists [][]common.FilterBuilderAssetItem,
+	limit int,
+	countries, states, cities, cameras []string,
+) []common.FilterBuilderAssetItem {
+	var balancedUserLists [][]common.FilterBuilderAssetItem
+	for _, items := range userItemLists {
+		if len(items) == 0 {
+			continue
+		}
+		balanced := balanceCategoryItems(items, countries, states, cities, cameras)
+		balancedUserLists = append(balancedUserLists, balanced)
+	}
+
+	return interleaveAssetItems(balancedUserLists, limit)
+}
+
+func balanceCategoryItems(
+	items []common.FilterBuilderAssetItem,
+	countries, states, cities, cameras []string,
+) []common.FilterBuilderAssetItem {
+	if len(items) <= 1 {
+		return items
+	}
+
+	if len(countries) > 1 {
+		bucketMap := make(map[string][]common.FilterBuilderAssetItem)
+		for _, c := range countries {
+			bucketMap[strings.ToLower(strings.TrimSpace(c))] = []common.FilterBuilderAssetItem{}
+		}
+		var other []common.FilterBuilderAssetItem
+		for _, item := range items {
+			key := strings.ToLower(strings.TrimSpace(item.Country))
+			if _, ok := bucketMap[key]; ok {
+				bucketMap[key] = append(bucketMap[key], item)
+			} else {
+				other = append(other, item)
+			}
+		}
+		var groups [][]common.FilterBuilderAssetItem
+		for _, c := range countries {
+			key := strings.ToLower(strings.TrimSpace(c))
+			if list := bucketMap[key]; len(list) > 0 {
+				groups = append(groups, list)
+			}
+		}
+		if len(other) > 0 {
+			groups = append(groups, other)
+		}
+		return interleaveAssetItems(groups, len(items))
+	}
+
+	if len(cities) > 1 {
+		bucketMap := make(map[string][]common.FilterBuilderAssetItem)
+		for _, c := range cities {
+			bucketMap[strings.ToLower(strings.TrimSpace(c))] = []common.FilterBuilderAssetItem{}
+		}
+		var other []common.FilterBuilderAssetItem
+		for _, item := range items {
+			key := strings.ToLower(strings.TrimSpace(item.City))
+			if _, ok := bucketMap[key]; ok {
+				bucketMap[key] = append(bucketMap[key], item)
+			} else {
+				other = append(other, item)
+			}
+		}
+		var groups [][]common.FilterBuilderAssetItem
+		for _, c := range cities {
+			key := strings.ToLower(strings.TrimSpace(c))
+			if list := bucketMap[key]; len(list) > 0 {
+				groups = append(groups, list)
+			}
+		}
+		if len(other) > 0 {
+			groups = append(groups, other)
+		}
+		return interleaveAssetItems(groups, len(items))
+	}
+
+	if len(states) > 1 {
+		bucketMap := make(map[string][]common.FilterBuilderAssetItem)
+		for _, s := range states {
+			bucketMap[strings.ToLower(strings.TrimSpace(s))] = []common.FilterBuilderAssetItem{}
+		}
+		var other []common.FilterBuilderAssetItem
+		for _, item := range items {
+			key := strings.ToLower(strings.TrimSpace(item.State))
+			if _, ok := bucketMap[key]; ok {
+				bucketMap[key] = append(bucketMap[key], item)
+			} else {
+				other = append(other, item)
+			}
+		}
+		var groups [][]common.FilterBuilderAssetItem
+		for _, s := range states {
+			key := strings.ToLower(strings.TrimSpace(s))
+			if list := bucketMap[key]; len(list) > 0 {
+				groups = append(groups, list)
+			}
+		}
+		if len(other) > 0 {
+			groups = append(groups, other)
+		}
+		return interleaveAssetItems(groups, len(items))
+	}
+
+	if len(cameras) > 1 {
+		bucketMap := make(map[string][]common.FilterBuilderAssetItem)
+		for _, cam := range cameras {
+			bucketMap[strings.ToLower(strings.TrimSpace(cam))] = []common.FilterBuilderAssetItem{}
+		}
+		var other []common.FilterBuilderAssetItem
+		for _, item := range items {
+			key := strings.ToLower(strings.TrimSpace(item.Model))
+			if _, ok := bucketMap[key]; ok {
+				bucketMap[key] = append(bucketMap[key], item)
+			} else {
+				other = append(other, item)
+			}
+		}
+		var groups [][]common.FilterBuilderAssetItem
+		for _, cam := range cameras {
+			key := strings.ToLower(strings.TrimSpace(cam))
+			if list := bucketMap[key]; len(list) > 0 {
+				groups = append(groups, list)
+			}
+		}
+		if len(other) > 0 {
+			groups = append(groups, other)
+		}
+		return interleaveAssetItems(groups, len(items))
+	}
+
+	return items
+}
+
+func interleaveAssetItems(groups [][]common.FilterBuilderAssetItem, limit int) []common.FilterBuilderAssetItem {
+	if len(groups) == 0 {
+		return nil
+	}
+	if len(groups) == 1 {
+		seen := make(map[string]bool)
+		var res []common.FilterBuilderAssetItem
+		for _, item := range groups[0] {
+			if !seen[item.ID] {
+				seen[item.ID] = true
+				res = append(res, item)
+				if len(res) >= limit {
+					break
+				}
+			}
+		}
+		return res
+	}
+
+	seen := make(map[string]bool)
+	var res []common.FilterBuilderAssetItem
+	maxLen := 0
+	for _, g := range groups {
+		if len(g) > maxLen {
+			maxLen = len(g)
+		}
+	}
+
+	for i := 0; i < maxLen; i++ {
+		for _, g := range groups {
+			if i < len(g) {
+				item := g[i]
+				if !seen[item.ID] {
+					seen[item.ID] = true
+					res = append(res, item)
+					if len(res) >= limit {
+						return res
+					}
+				}
+			}
+		}
+	}
+
+	return res
 }
 
 func cleanSlice(s []string) []string {
