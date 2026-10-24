@@ -62,6 +62,11 @@ func FilterBuilderPage(baseConfig *config.Config, com *common.Common) echo.Handl
 			log.Warn("filter builder: fetching tags", "err", tagsErr)
 		}
 
+		locs, locsErr := im.AllLocations(requestID, deviceID)
+		if locsErr != nil {
+			log.Warn("filter builder: fetching locations", "err", locsErr)
+		}
+
 		var users []string
 		for u := range baseConfig.ImmichUsersAPIKeys {
 			uClean := strings.TrimSpace(u)
@@ -86,6 +91,10 @@ func FilterBuilderPage(baseConfig *config.Config, com *common.Common) echo.Handl
 			People:        ppl,
 			Albums:        albs,
 			Tags:          tags,
+			Countries:     locs.Countries,
+			States:        locs.States,
+			Cities:        locs.Cities,
+			Cameras:       locs.Cameras,
 			InitialFilter: initialFilter,
 		}
 
@@ -146,23 +155,23 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 		typeVal := strings.TrimSpace(c.FormValue("type"))
 		ratingStr := strings.TrimSpace(c.FormValue("rating"))
 		ratingVal, _ := strconv.Atoi(ratingStr)
-		people := c.Request().Form["people"]
+		people := cleanSlice(c.Request().Form["people"])
 		hasPeople := strings.TrimSpace(c.FormValue("has_people"))
-		albums := c.Request().Form["albums"]
+		albums := cleanSlice(c.Request().Form["albums"])
 		hasAlbums := strings.TrimSpace(c.FormValue("has_albums"))
-		tags := c.Request().Form["tags"]
+		tags := cleanSlice(c.Request().Form["tags"])
 		hasTags := strings.TrimSpace(c.FormValue("has_tags"))
-		country := strings.TrimSpace(c.FormValue("country"))
-		state := strings.TrimSpace(c.FormValue("state"))
-		city := strings.TrimSpace(c.FormValue("city"))
-		camera := strings.TrimSpace(c.FormValue("camera"))
+		countries := cleanSlice(c.Request().Form["country"])
+		states := cleanSlice(c.Request().Form["state"])
+		cities := cleanSlice(c.Request().Form["city"])
+		cameras := cleanSlice(c.Request().Form["camera"])
 		takenAfter := strings.TrimSpace(c.FormValue("taken_after"))
 		takenBefore := strings.TrimSpace(c.FormValue("taken_before"))
 
 		hasVisualCriteria := favorite != "" || typeVal != "" || ratingVal > 0 ||
 			len(people) > 0 || hasPeople != "" || len(albums) > 0 || hasAlbums != "" ||
-			len(tags) > 0 || hasTags != "" || country != "" || state != "" || city != "" ||
-			camera != "" || takenAfter != "" || takenBefore != ""
+			len(tags) > 0 || hasTags != "" || len(countries) > 0 || len(states) > 0 || len(cities) > 0 ||
+			len(cameras) > 0 || takenAfter != "" || takenBefore != ""
 
 		if rawFilter != "" {
 			parsedFilters, err := immich.ParseUserFilters(rawFilter, knownUsers)
@@ -173,7 +182,12 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 				}))
 			}
 			userFilters = parsedFilters
-			filterRaw = rawFilter
+			var prettyBuf bytes.Buffer
+			if err := json.Indent(&prettyBuf, []byte(rawFilter), "", "  "); err == nil {
+				filterRaw = prettyBuf.String()
+			} else {
+				filterRaw = rawFilter
+			}
 		} else if hasVisualCriteria {
 			var searchFilter immich.SearchFilter
 
@@ -232,17 +246,28 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 				searchFilter.HasTags = immich.BoolFilter{Eq: &f}
 			}
 
-			if country != "" {
-				searchFilter.Country = immich.StringFilterNullable{Eq: country}
+			if len(countries) == 1 {
+				searchFilter.Country = immich.StringFilterNullable{Eq: countries[0]}
+			} else if len(countries) > 1 {
+				searchFilter.Country = immich.StringFilterNullable{In: countries}
 			}
-			if state != "" {
-				searchFilter.State = immich.StringFilterNullable{Eq: state}
+
+			if len(states) == 1 {
+				searchFilter.State = immich.StringFilterNullable{Eq: states[0]}
+			} else if len(states) > 1 {
+				searchFilter.State = immich.StringFilterNullable{In: states}
 			}
-			if city != "" {
-				searchFilter.City = immich.StringFilterNullable{Eq: city}
+
+			if len(cities) == 1 {
+				searchFilter.City = immich.StringFilterNullable{Eq: cities[0]}
+			} else if len(cities) > 1 {
+				searchFilter.City = immich.StringFilterNullable{In: cities}
 			}
-			if camera != "" {
-				searchFilter.Model = immich.StringFilterNullable{Eq: camera}
+
+			if len(cameras) == 1 {
+				searchFilter.Model = immich.StringFilterNullable{Eq: cameras[0]}
+			} else if len(cameras) > 1 {
+				searchFilter.Model = immich.StringFilterNullable{In: cameras}
 			}
 
 			if takenAfter != "" {
@@ -265,9 +290,10 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 			filterRaw = string(prettyBytes)
 			userFilters = immich.UserFilterMap{"": searchFilter}
 		} else {
-			return Render(c, http.StatusOK, partials.FilterBuilderResult(common.FilterBuilderResultData{
-				Error: "Please enter a valid JSON filter before running simulation.",
-			}))
+			// No visual criteria or raw JSON provided: default to open search so simulation immediately shows real photos
+			var searchFilter immich.SearchFilter
+			filterRaw = "{}"
+			userFilters = immich.UserFilterMap{"": searchFilter}
 		}
 
 		// Build Kiosk URL
@@ -289,19 +315,39 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 			filterQuery = compactBuf.String()
 		}
 
-		kioskURL := fmt.Sprintf("%s://%s/?filter=%s", scheme, kioskHost, url.QueryEscape(filterQuery))
-		if selectedUser != "" && selectedUser != "all" {
-			kioskURL += "&user=" + url.QueryEscape(selectedUser)
-		}
-		if baseConfig.Kiosk.Password != "" {
-			kioskURL += "&password=" + url.QueryEscape(baseConfig.Kiosk.Password)
+		var kioskURL string
+		if filterQuery == "{}" || filterQuery == "" {
+			kioskURL = fmt.Sprintf("%s://%s/", scheme, kioskHost)
+			if selectedUser != "" && selectedUser != "all" {
+				kioskURL += "?user=" + url.QueryEscape(selectedUser)
+			}
+			if baseConfig.Kiosk.Password != "" {
+				sep := "?"
+				if strings.Contains(kioskURL, "?") {
+					sep = "&"
+				}
+				kioskURL += sep + "password=" + url.QueryEscape(baseConfig.Kiosk.Password)
+			}
+		} else {
+			kioskURL = fmt.Sprintf("%s://%s/?filter=%s", scheme, kioskHost, url.QueryEscape(filterQuery))
+			if selectedUser != "" && selectedUser != "all" {
+				kioskURL += "&user=" + url.QueryEscape(selectedUser)
+			}
+			if baseConfig.Kiosk.Password != "" {
+				kioskURL += "&password=" + url.QueryEscape(baseConfig.Kiosk.Password)
+			}
 		}
 
-		redirectYAML := fmt.Sprintf("redirects:\n  - name: \"Custom Filtered Slideshow\"\n    url: \"/?filter=%s", url.QueryEscape(filterQuery))
-		if selectedUser != "" && selectedUser != "all" {
-			redirectYAML += fmt.Sprintf("&user=%s", url.QueryEscape(selectedUser))
+		var redirectYAML string
+		if filterQuery == "{}" || filterQuery == "" {
+			redirectYAML = "redirects:\n  - name: \"Custom Filtered Slideshow\"\n    url: \"/\""
+		} else {
+			redirectYAML = fmt.Sprintf("redirects:\n  - name: \"Custom Filtered Slideshow\"\n    url: \"/?filter=%s", url.QueryEscape(filterQuery))
+			if selectedUser != "" && selectedUser != "all" {
+				redirectYAML += fmt.Sprintf("&user=%s", url.QueryEscape(selectedUser))
+			}
+			redirectYAML += "\""
 		}
-		redirectYAML += "\""
 
 		// Execute queries against Immich API
 		var items []common.FilterBuilderAssetItem
@@ -438,3 +484,15 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 		}))
 	}
 }
+
+func cleanSlice(s []string) []string {
+	var res []string
+	for _, v := range s {
+		v = strings.TrimSpace(v)
+		if v != "" {
+			res = append(res, v)
+		}
+	}
+	return res
+}
+

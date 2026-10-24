@@ -157,6 +157,10 @@ type FilterBuilderViewData struct {
 	People        []immich.Person
 	Albums        immich.Albums
 	Tags          immich.Tags
+	Countries     []string
+	States        []string
+	Cities        []string
+	Cameras       []string
 	InitialFilter string
 }
 

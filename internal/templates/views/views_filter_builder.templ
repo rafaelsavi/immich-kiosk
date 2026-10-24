@@ -314,7 +314,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 							</p>
 
 							<form
-								id="filter-builder-form"
+								id="url-builder-form"
 								hx-post="/filter-builder/search"
 								hx-trigger="load,change,multiselect-change from:body"
 								hx-target="#filter-builder-results"
@@ -382,13 +382,47 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 
 								// Location
 								<h2>Location</h2>
-								@URLBuilderText("Country", "country", "Filter by country name (e.g. Germany, Brazil, Croatia).", "")
-								@URLBuilderText("State / Region", "state", "Filter by state or province name.", "")
-								@URLBuilderText("City", "city", "Filter by city or town name.", "")
+								if len(d.Countries) > 0 {
+									@URLBuilderMultiSelect("Country", "country", "Filter by country (assets must match any selected country).") {
+										for _, c := range d.Countries {
+											<option value={ c }>{ c }</option>
+										}
+									}
+								} else {
+									@URLBuilderText("Country", "country", "Filter by country name (e.g. Germany, Brazil, Croatia).", "")
+								}
+
+								if len(d.States) > 0 {
+									@URLBuilderMultiSelect("State / Region", "state", "Filter by state or province name.") {
+										for _, s := range d.States {
+											<option value={ s }>{ s }</option>
+										}
+									}
+								} else {
+									@URLBuilderText("State / Region", "state", "Filter by state or province name.", "")
+								}
+
+								if len(d.Cities) > 0 {
+									@URLBuilderMultiSelect("City", "city", "Filter by city or town name.") {
+										for _, c := range d.Cities {
+											<option value={ c }>{ c }</option>
+										}
+									}
+								} else {
+									@URLBuilderText("City", "city", "Filter by city or town name.", "")
+								}
 
 								// Camera & EXIF
 								<h2>Camera & EXIF</h2>
-								@URLBuilderText("Camera model", "camera", "Filter by camera model (e.g. iPhone, Pixel, Sony).", "")
+								if len(d.Cameras) > 0 {
+									@URLBuilderMultiSelect("Camera model", "camera", "Filter by camera model.") {
+										for _, m := range d.Cameras {
+											<option value={ m }>{ m }</option>
+										}
+									}
+								} else {
+									@URLBuilderText("Camera model", "camera", "Filter by camera model (e.g. iPhone, Pixel, Sony).", "")
+								}
 
 								// Dates
 								<h2>Dates</h2>
@@ -413,9 +447,11 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 
 						<!-- Results Sticky Column on the Right -->
 						<div class="result--container">
-							<div id="filter-builder-results">
-								<div style="padding: 2rem; color: #6b7280; text-align: center;">
-									Loading filter simulation...
+							<div class="result">
+								<div id="filter-builder-results">
+									<div style="padding: 2rem; color: #6b7280; text-align: center;">
+										Loading filter simulation...
+									</div>
 								</div>
 							</div>
 						</div>

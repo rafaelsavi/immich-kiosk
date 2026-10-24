@@ -185,6 +185,20 @@ func (a *Asset) SearchMetadataWithFilter(ctx context.Context, filter SearchFilte
 		size = 24
 	}
 
+	// Apply kiosk-wide constraints if not explicitly set in the filter, matching RandomAssetWithFilter
+	if len(filter.Type.In) == 0 && filter.Type.Eq == "" {
+		filter.Type = FilterAssetType{In: []AssetType{ImageType}}
+		if a.requestConfig.ShowVideos {
+			filter.Type.In = append(filter.Type.In, VideoType)
+		}
+	}
+	if len(filter.Visibility.In) == 0 && filter.Visibility.Eq == "" {
+		filter.Visibility = FilterAssetVisibility{In: []AssetVisibility{Timeline}}
+		if a.requestConfig.ShowArchived {
+			filter.Visibility.In = append(filter.Visibility.In, Archive)
+		}
+	}
+
 	requestBody := SearchRandomBody{
 		Filter:     filter,
 		Size:       size,
@@ -192,12 +206,7 @@ func (a *Asset) SearchMetadataWithFilter(ctx context.Context, filter SearchFilte
 		WithPeople: true,
 	}
 
-	apiURL := url.URL{
-		Scheme: u.Scheme,
-		Host:   u.Host,
-		Path:   SearchMetadataEndpoint,
-	}
-
+	apiURL := u.JoinPath(SearchMetadataEndpoint)
 	if page > 1 {
 		q := apiURL.Query()
 		q.Set("page", fmt.Sprintf("%d", page))
@@ -211,11 +220,28 @@ func (a *Asset) SearchMetadataWithFilter(ctx context.Context, filter SearchFilte
 
 	apiBody, _, _, err := a.immichAPICall(ctx, http.MethodPost, apiURL.String(), jsonBody)
 	if err != nil {
+		// Fallback to SearchRandomEndpoint if metadata search endpoint fails or is rejected
+		randomURL := u.JoinPath(SearchRandomEndpoint)
+		randomBody, _, _, errRandom := a.immichAPICall(ctx, http.MethodPost, randomURL.String(), jsonBody)
+		if errRandom != nil {
+			return response, err
+		}
+		var randomAssets []Asset
+		if errUnmarshal := json.Unmarshal(randomBody, &randomAssets); errUnmarshal == nil {
+			response.Assets.Items = randomAssets
+			response.Assets.Total = len(randomAssets)
+			return response, nil
+		}
 		return response, err
 	}
 
-	if err = json.Unmarshal(apiBody, &response); err != nil {
-		return response, err
+	if err = json.Unmarshal(apiBody, &response); err != nil || len(response.Assets.Items) == 0 {
+		var listAssets []Asset
+		if errList := json.Unmarshal(apiBody, &listAssets); errList == nil && len(listAssets) > 0 {
+			response.Assets.Items = listAssets
+			response.Assets.Total = len(listAssets)
+			return response, nil
+		}
 	}
 
 	return response, nil

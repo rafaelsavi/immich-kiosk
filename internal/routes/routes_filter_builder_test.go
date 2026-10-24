@@ -15,6 +15,13 @@ import (
 )
 
 func TestFilterBuilderPage(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
 	cache.Initialize()
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/filter-builder", nil)
@@ -22,6 +29,8 @@ func TestFilterBuilderPage(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	baseConfig := config.New()
+	baseConfig.ImmichURL = server.URL
+	baseConfig.ImmichAPIKey = "test-key"
 	baseConfig.Kiosk.EnableURLBuilder = true
 	baseConfig.ImmichUsersAPIKeys = map[string]string{
 		"rafael": "key1",
@@ -41,6 +50,13 @@ func TestFilterBuilderPage(t *testing.T) {
 }
 
 func TestFilterBuilderSearch_EmptyFilter(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"assets":{"items":[],"total":0,"count":0}}`))
+	}))
+	defer server.Close()
+
 	e := echo.New()
 	form := url.Values{}
 	form.Set("filter", "")
@@ -50,6 +66,8 @@ func TestFilterBuilderSearch_EmptyFilter(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	baseConfig := config.New()
+	baseConfig.ImmichURL = server.URL
+	baseConfig.ImmichAPIKey = "test-key"
 	com := common.New()
 
 	handler := FilterBuilderSearch(baseConfig, com)
@@ -58,7 +76,8 @@ func TestFilterBuilderSearch_EmptyFilter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body := rec.Body.String()
-	assert.Contains(t, body, "Please enter a valid JSON filter")
+	assert.NotContains(t, body, "Filter Error")
+	assert.Contains(t, body, "filter-builder-results")
 }
 
 func TestFilterBuilderSearch_InvalidJSON(t *testing.T) {

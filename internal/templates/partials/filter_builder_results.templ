@@ -46,9 +46,29 @@ templ FilterBuilderResult(d common.FilterBuilderResultData) {
 					<span>matching assets in Immich (displaying { strconv.Itoa(len(d.Assets)) } samples)</span>
 				</div>
 			</div>
+		}
 
-			<!-- Action Cards: Generated URL & YAML -->
+		if d.FilterJSON != "" {
+			<!-- Action Cards: Filter JSON, Generated URL & YAML -->
 			<div class="filter-builder-export-grid">
+				<div class="filter-builder-export-card">
+					<div class="filter-builder-export-header">
+						<span>Filter JSON (Search API v2)</span>
+						<div class="filter-builder-export-actions">
+							<button type="button" class="btn-copy" onclick="copySnippet(this, 'filter-json-text')">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+								</svg>
+								<span>Copy JSON</span>
+							</button>
+						</div>
+					</div>
+					<div class="filter-builder-code-block">
+						<pre id="filter-json-text">{ d.FilterJSON }</pre>
+					</div>
+				</div>
+
 				<div class="filter-builder-export-card">
 					<div class="filter-builder-export-header">
 						<span>Direct Kiosk Slideshow URL</span>
@@ -99,6 +119,9 @@ templ FilterBuilderResult(d common.FilterBuilderResultData) {
 					</div>
 				</div>
 			</div>
+		}
+
+		if len(d.Assets) > 0 {
 
 			<!-- Asset Miniature Grid -->
 			<div class="filter-builder-gallery-header">

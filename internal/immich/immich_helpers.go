@@ -210,6 +210,9 @@ func (a *Asset) immichAPICall(ctx context.Context, method, apiURL string, body [
 				return responseBody, contentType, false, fmt.Errorf("received %d (unauthorised) code from Immich. Please check your Immich API is correct", res.StatusCode)
 			}
 
+			if bodyMsg := strings.TrimSpace(string(responseBody)); bodyMsg != "" {
+				return responseBody, contentType, false, fmt.Errorf("HTTP %d: %s", res.StatusCode, bodyMsg)
+			}
 			return responseBody, contentType, false, fmt.Errorf("HTTP %d: unexpected status code", res.StatusCode)
 		}
 
