@@ -560,6 +560,72 @@ func (a *Asset) SearchRandomWithFilter(ctx context.Context, filter SearchFilter,
 	return randomAssets, nil
 }
 
+// CountAssetsWithFilter counts matching assets using lightweight metadata search queries.
+// It returns the total count, whether the count is exact, and any error encountered.
+func (a *Asset) CountAssetsWithFilter(ctx context.Context, filter SearchFilter, maxCount int, requestID, deviceID string) (int, bool, error) {
+	if maxCount <= 0 {
+		maxCount = 5000
+	}
+
+	u, err := url.Parse(a.requestConfig.ImmichURL)
+	if err != nil {
+		return 0, false, err
+	}
+
+	// Apply kiosk-wide constraints if not explicitly set in the filter
+	if len(filter.Type.In) == 0 && filter.Type.Eq == "" {
+		filter.Type = FilterAssetType{In: []AssetType{ImageType}}
+		if a.requestConfig.ShowVideos {
+			filter.Type.In = append(filter.Type.In, VideoType)
+		}
+	}
+	if len(filter.Visibility.In) == 0 && filter.Visibility.Eq == "" {
+		filter.Visibility = FilterAssetVisibility{In: []AssetVisibility{Timeline}}
+		if a.requestConfig.ShowArchived {
+			filter.Visibility.In = append(filter.Visibility.In, Archive)
+		}
+	}
+
+	apiURL := u.JoinPath(SearchMetadataEndpoint).String()
+	total := 0
+	cursor := ""
+
+	for {
+		requestBody := SearchRandomBody{
+			Filter:     filter,
+			Size:       1000,
+			WithExif:   false,
+			WithPeople: false,
+			Cursor:     cursor,
+		}
+
+		jsonBody, err := json.Marshal(requestBody)
+		if err != nil {
+			return total, false, err
+		}
+
+		apiBody, _, _, err := a.immichAPICall(ctx, http.MethodPost, apiURL, jsonBody)
+		if err != nil {
+			return total, false, err
+		}
+
+		var resp SearchMetadataResponse
+		if err := json.Unmarshal(apiBody, &resp); err != nil {
+			return total, false, err
+		}
+
+		pageItems := len(resp.Assets.Items)
+		total += pageItems
+
+		if resp.Assets.NextCursor == "" || pageItems < 1000 || total >= maxCount {
+			isExact := resp.Assets.NextCursor == "" || pageItems < 1000
+			return total, isExact, nil
+		}
+
+		cursor = resp.Assets.NextCursor
+	}
+}
+
 // RandomAssetWithFilter retrieves a random asset matching a SearchFilter for the specified user.
 func (a *Asset) RandomAssetWithFilter(userID string, requestID, deviceID string, isPrefetch bool) error {
 	if isPrefetch {

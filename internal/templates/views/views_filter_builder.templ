@@ -384,9 +384,83 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
+					flex-wrap: wrap;
+					gap: 0.6rem;
 					margin-bottom: 1rem;
 					padding-bottom: 0.5rem;
 					border-bottom: 1px solid #f1f5f9;
+				}
+
+				.simulation-title-wrap {
+					display: flex;
+					align-items: center;
+					flex-wrap: wrap;
+					gap: 0.5rem;
+				}
+
+				.simulation-limit-selector {
+					display: flex;
+					align-items: center;
+					gap: 0.3rem;
+				}
+
+				.limit-label {
+					font-size: 0.75rem;
+					font-weight: 600;
+					color: #64748b;
+				}
+
+				.limit-pill {
+					padding: 0.2rem 0.5rem;
+					font-size: 0.75rem;
+					font-weight: 600;
+					border-radius: 0.375rem;
+					border: 1px solid #e2e8f0;
+					background: #f8fafc;
+					color: #475569;
+					cursor: pointer;
+					transition: all 0.15s ease;
+				}
+
+				.limit-pill:hover {
+					border-color: #0284c7;
+					color: #0284c7;
+					background: #f0f9ff;
+				}
+
+				.limit-pill.active {
+					background: #0284c7;
+					color: #ffffff;
+					border-color: #0284c7;
+				}
+
+				.simulation-load-more {
+					margin-top: 1rem;
+					padding-top: 0.75rem;
+					border-top: 1px solid #f1f5f9;
+					display: flex;
+					justify-content: center;
+				}
+
+				.load-more-btn {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.5rem;
+					padding: 0.55rem 1.25rem;
+					font-size: 0.85rem;
+					font-weight: 600;
+					color: #0284c7;
+					background: #f0f9ff;
+					border: 1px solid #bae6fd;
+					border-radius: 0.5rem;
+					cursor: pointer;
+					transition: all 0.15s ease;
+				}
+
+				.load-more-btn:hover {
+					background: #e0f2fe;
+					border-color: #7dd3fc;
+					transform: translateY(-1px);
 				}
 
 				.count-badge {
@@ -535,6 +609,27 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					}
 				}
 
+				function setPlaygroundLimit(newLimit) {
+					const limitInput = document.getElementById('url-builder-limit');
+					if (limitInput) {
+						limitInput.value = newLimit;
+						limitInput.dispatchEvent(new Event('change', { bubbles: true }));
+						document.body.dispatchEvent(new Event('multiselect-change'));
+					}
+				}
+
+				function increasePlaygroundLimit() {
+					const limitInput = document.getElementById('url-builder-limit');
+					const cur = limitInput ? parseInt(limitInput.value, 10) || 24 : 24;
+					let next = 48;
+					if (cur >= 144) next = 200;
+					else if (cur >= 96) next = 144;
+					else if (cur >= 72) next = 96;
+					else if (cur >= 48) next = 72;
+					else if (cur >= 24) next = 48;
+					setPlaygroundLimit(next);
+				}
+
 				document.addEventListener('DOMContentLoaded', function() {
 					const userSelect = document.getElementById('url-builder-user');
 					if (userSelect) {
@@ -598,6 +693,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 								}) }
 							}
 						>
+							<input type="hidden" id="url-builder-limit" name="limit" value="24"/>
 							if d.ViewData.Config.Kiosk.Password != "" {
 								<input type="hidden" name="password" value={ d.ViewData.Config.Kiosk.Password }/>
 							}

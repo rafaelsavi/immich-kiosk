@@ -40,6 +40,8 @@ type FilterBuilderViewData struct {
 // FilterBuilderResultData holds the live test results rendered in the filter playground results card
 type FilterBuilderResultData struct {
 	Total        int
+	TotalExact   bool
+	Limit        int
 	Assets       []FilterBuilderAssetItem
 	FilterJSON   string
 	KioskURL     string

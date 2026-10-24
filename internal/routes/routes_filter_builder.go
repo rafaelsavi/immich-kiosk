@@ -264,8 +264,8 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 		limitStr := strings.TrimSpace(c.FormValue("limit"))
 		limit := 24
 		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
-			if l > 100 {
-				limit = 100
+			if l > 200 {
+				limit = 200
 			} else {
 				limit = l
 			}
@@ -540,6 +540,11 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 		userItemLists := make([][]common.FilterBuilderAssetItem, len(queriesToRun))
 		var searchErrors []string
 
+		var countG errgroup.Group
+		var countMu sync.Mutex
+		var totalMatchingCount int
+		isExactCount := true
+
 		for idx, query := range queriesToRun {
 			i := idx
 			q := query
@@ -571,11 +576,35 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 				userItemLists[i] = uItems
 				return nil
 			})
+
+			countG.Go(func() error {
+				userCfg := requestConfig
+				if q.user != "" {
+					userCfg.SelectedUser = q.user
+					if key, ok := baseConfig.ImmichUsersAPIKeys[q.user]; ok {
+						userCfg.ImmichAPIKey = key
+					}
+				}
+				imAsset := immich.New(com.Context(), userCfg)
+				c, exact, err := imAsset.CountAssetsWithFilter(context.Background(), q.filter, 5000, requestID, deviceID)
+				if err == nil {
+					countMu.Lock()
+					totalMatchingCount += c
+					if !exact {
+						isExactCount = false
+					}
+					countMu.Unlock()
+				}
+				return nil
+			})
 		}
 		_ = g.Wait()
+		_ = countG.Wait()
 
 		items := balanceAndInterleaveItems(userItemLists, limit, countries, states, cities, cameras)
-		totalCount := len(items)
+		if totalMatchingCount < len(items) {
+			totalMatchingCount = len(items)
+		}
 
 		errMsg := ""
 		if len(searchErrors) > 0 && len(items) == 0 {
@@ -583,7 +612,9 @@ func FilterBuilderSearch(baseConfig *config.Config, com *common.Common) echo.Han
 		}
 
 		return Render(c, http.StatusOK, partials.FilterBuilderResult(common.FilterBuilderResultData{
-			Total:        totalCount,
+			Total:        totalMatchingCount,
+			TotalExact:   isExactCount,
+			Limit:        limit,
 			Assets:       items,
 			FilterJSON:   filterRaw,
 			KioskURL:     kioskURL,
