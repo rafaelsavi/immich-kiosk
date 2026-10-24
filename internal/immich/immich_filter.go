@@ -10,11 +10,261 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
 	"charm.land/log/v2"
 	"github.com/damongolding/immich-kiosk/internal/cache"
 	"github.com/damongolding/immich-kiosk/internal/kiosk"
 )
+
+type SearchFilterBranch struct {
+	AlbumIDs         IDsFilter              `url:"albumIds,omitempty,omitzero" json:"albumIds,omitzero"`
+	Checksum         StringFilter           `url:"checksum,omitempty,omitzero" json:"checksum,omitzero"`
+	City             StringFilterNullable   `url:"city,omitempty,omitzero" json:"city,omitzero"`
+	Country          StringFilterNullable   `url:"country,omitempty,omitzero" json:"country,omitzero"`
+	CreatedAt        DateFilter             `url:"createdAt,omitempty,omitzero" json:"createdAt,omitzero"`
+	Description      StringPatternFilter    `url:"description,omitempty,omitzero" json:"description,omitzero"`
+	EncodedVideoPath StringFilter           `url:"encodedVideoPath,omitempty,omitzero" json:"encodedVideoPath,omitzero"`
+	FileSizeInBytes  NumberFilter           `url:"fileSizeInBytes,omitempty,omitzero" json:"fileSizeInBytes,omitzero"`
+	HasAlbums        BoolFilter             `url:"hasAlbums,omitempty,omitzero" json:"hasAlbums,omitzero"`
+	HasPeople        BoolFilter             `url:"hasPeople,omitempty,omitzero" json:"hasPeople,omitzero"`
+	HasTags          BoolFilter             `url:"hasTags,omitempty,omitzero" json:"hasTags,omitzero"`
+	ID               IDFilter               `url:"id,omitempty,omitzero" json:"id,omitzero"`
+	IsEncoded        BoolFilter             `url:"isEncoded,omitempty,omitzero" json:"isEncoded,omitzero"`
+	IsFavorite       BoolFilter             `url:"isFavorite,omitempty,omitzero" json:"isFavorite,omitzero"`
+	IsMotion         BoolFilter             `url:"isMotion,omitempty,omitzero" json:"isMotion,omitzero"`
+	IsOffline        BoolFilter             `url:"isOffline,omitempty,omitzero" json:"isOffline,omitzero"`
+	LensModel        StringFilterNullable   `url:"lensModel,omitempty,omitzero" json:"lensModel,omitzero"`
+	LibraryID        IDFilterNullable       `url:"libraryId,omitempty,omitzero" json:"libraryId,omitzero"`
+	Make             StringFilterNullable   `url:"make,omitempty,omitzero" json:"make,omitzero"`
+	Model            StringFilterNullable   `url:"model,omitempty,omitzero" json:"model,omitzero"`
+	Ocr              StringSimilarityFilter `url:"ocr,omitempty,omitzero" json:"ocr,omitzero"`
+	OriginalFileName StringPatternFilter    `url:"originalFileName,omitempty,omitzero" json:"originalFileName,omitzero"`
+	OriginalPath     StringPatternFilter    `url:"originalPath,omitempty,omitzero" json:"originalPath,omitzero"`
+	PersonIDs        IDsFilter              `url:"personIds,omitempty,omitzero" json:"personIds,omitzero"`
+	Rating           NumberFilterNullable   `url:"rating,omitempty,omitzero" json:"rating,omitzero"`
+	State            StringFilterNullable   `json:"state,omitzero"`
+	TagIDs           IDsFilter              `url:"tagIds,omitempty,omitzero" json:"tagIds,omitzero"`
+	TakenAt          DateFilter             `url:"takenAt,omitempty,omitzero" json:"takenAt,omitzero"`
+	Type             FilterAssetType        `url:"type,omitempty,omitzero" json:"type,omitzero"`
+	UpdatedAt        DateFilter             `url:"updatedAt,omitempty,omitzero" json:"updatedAt,omitzero"`
+	Visibility       FilterAssetVisibility  `url:"visibility,omitempty,omitzero" json:"visibility,omitzero"`
+}
+
+func (s *StringFilterNullable) UnmarshalJSON(data []byte) error {
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		s.Eq = strVal
+		return nil
+	}
+	var sliceVal []string
+	if err := json.Unmarshal(data, &sliceVal); err == nil {
+		s.In = sliceVal
+		return nil
+	}
+	type rawStringFilterNullable StringFilterNullable
+	var raw rawStringFilterNullable
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*s = StringFilterNullable(raw)
+	return nil
+}
+
+func (b *BoolFilter) UnmarshalJSON(data []byte) error {
+	var boolVal bool
+	if err := json.Unmarshal(data, &boolVal); err == nil {
+		b.Eq = &boolVal
+		return nil
+	}
+	var raw struct {
+		Eq *bool `json:"eq"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	b.Eq = raw.Eq
+	return nil
+}
+
+func parseFlexibleTime(s string) (time.Time, error) {
+	s = strings.TrimSpace(s)
+	formats := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	}
+	for _, f := range formats {
+		if t, err := time.Parse(f, s); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unable to parse date string: %q", s)
+}
+
+func (d *DateFilter) UnmarshalJSON(data []byte) error {
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		t, err := parseFlexibleTime(strVal)
+		if err != nil {
+			return err
+		}
+		d.Gte = t
+		return nil
+	}
+
+	var raw struct {
+		Eq  any `json:"eq,omitempty"`
+		Gt  any `json:"gt,omitempty"`
+		Gte any `json:"gte,omitempty"`
+		Lt  any `json:"lt,omitempty"`
+		Lte any `json:"lte,omitempty"`
+		Ne  any `json:"ne,omitempty"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	parseVal := func(v any) (time.Time, error) {
+		if v == nil {
+			return time.Time{}, nil
+		}
+		if s, ok := v.(string); ok && s != "" {
+			return parseFlexibleTime(s)
+		}
+		return time.Time{}, fmt.Errorf("invalid date value: %v", v)
+	}
+
+	if raw.Eq != nil {
+		t, err := parseVal(raw.Eq)
+		if err != nil {
+			return err
+		}
+		d.Eq = t
+	}
+	if raw.Gt != nil {
+		t, err := parseVal(raw.Gt)
+		if err != nil {
+			return err
+		}
+		d.Gt = t
+	}
+	if raw.Gte != nil {
+		t, err := parseVal(raw.Gte)
+		if err != nil {
+			return err
+		}
+		d.Gte = t
+	}
+	if raw.Lt != nil {
+		t, err := parseVal(raw.Lt)
+		if err != nil {
+			return err
+		}
+		d.Lt = t
+	}
+	if raw.Lte != nil {
+		t, err := parseVal(raw.Lte)
+		if err != nil {
+			return err
+		}
+		d.Lte = t
+	}
+	if raw.Ne != nil {
+		t, err := parseVal(raw.Ne)
+		if err != nil {
+			return err
+		}
+		d.Ne = t
+	}
+	return nil
+}
+
+func (ids *IDsFilter) UnmarshalJSON(data []byte) error {
+	var sliceVal []string
+	if err := json.Unmarshal(data, &sliceVal); err == nil {
+		ids.Any = sliceVal
+		return nil
+	}
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		ids.Any = []string{strVal}
+		return nil
+	}
+	type rawIDsFilter IDsFilter
+	var raw rawIDsFilter
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*ids = IDsFilter(raw)
+	return nil
+}
+
+func (n *NumberFilterNullable) UnmarshalJSON(data []byte) error {
+	var numVal float64
+	if err := json.Unmarshal(data, &numVal); err == nil {
+		n.Eq = numVal
+		return nil
+	}
+	type rawNumberFilterNullable NumberFilterNullable
+	var raw rawNumberFilterNullable
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*n = NumberFilterNullable(raw)
+	return nil
+}
+
+func (f *FilterAssetType) UnmarshalJSON(data []byte) error {
+	var single string
+	if err := json.Unmarshal(data, &single); err == nil {
+		f.In = []AssetType{AssetType(single)}
+		return nil
+	}
+	var list []AssetType
+	if err := json.Unmarshal(data, &list); err == nil {
+		f.In = list
+		return nil
+	}
+	type rawFilterAssetType FilterAssetType
+	var raw rawFilterAssetType
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*f = FilterAssetType(raw)
+	return nil
+}
+
+func (s *SearchFilter) UnmarshalJSON(data []byte) error {
+	type rawSearchFilter SearchFilter
+	var raw struct {
+		rawSearchFilter
+		TakenAfter  any `json:"takenAfter,omitempty"`
+		TakenBefore any `json:"takenBefore,omitempty"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*s = SearchFilter(raw.rawSearchFilter)
+	if raw.TakenAfter != nil {
+		if str, ok := raw.TakenAfter.(string); ok && str != "" {
+			if t, err := parseFlexibleTime(str); err == nil {
+				s.TakenAt.Gte = t
+			}
+		}
+	}
+	if raw.TakenBefore != nil {
+		if str, ok := raw.TakenBefore.(string); ok && str != "" {
+			if t, err := parseFlexibleTime(str); err == nil {
+				s.TakenAt.Lte = t
+			}
+		}
+	}
+	return nil
+}
 
 // UserFilterMap maps usernames to their respective Immich SearchFilters.
 // A key of "" or "*" represents a default/global filter applicable to any user.

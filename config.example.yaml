@@ -188,7 +188,7 @@ kiosk:
   behind_proxy: false
   disable_url_queries: false
   disable_config_endpoint: false
-  enable_url_builder: false # Enables the URL builder (/url-builder) and Filter Builder (/filter-builder)
+  enable_url_builder: false # Enables the URL builder (/url-builder) and Filter Playground (/url-builder/filters)
   watch_config: false
   fetched_assets_size: 1000
   http_timeout: 20

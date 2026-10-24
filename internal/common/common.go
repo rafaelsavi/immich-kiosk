@@ -137,42 +137,6 @@ type URLViewData struct {
 	Tags   []immich.Tag
 }
 
-type FilterBuilderAssetItem struct {
-	ID           string
-	ThumbnailURL string
-	User         string
-	Type         string
-	City         string
-	Country      string
-	TakenAt      string
-	IsFavorite   bool
-	Rating       int
-	People       []string
-	Filename     string
-}
-
-type FilterBuilderViewData struct {
-	ViewData      ViewData
-	Users         []string
-	People        []immich.Person
-	Albums        immich.Albums
-	Tags          immich.Tags
-	Countries     []string
-	States        []string
-	Cities        []string
-	Cameras       []string
-	InitialFilter string
-}
-
-type FilterBuilderResultData struct {
-	Total        int
-	Assets       []FilterBuilderAssetItem
-	FilterJSON   string
-	KioskURL     string
-	RedirectYAML string
-	Error        string
-}
-
 type URLBuilderRequest struct {
 	// Duration
 	Duration       *uint64 `form:"duration" url:"duration,omitempty"`

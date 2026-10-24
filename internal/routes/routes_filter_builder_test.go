@@ -44,7 +44,7 @@ func TestFilterBuilderPage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body := rec.Body.String()
-	assert.Contains(t, body, "Filter Builder")
+	assert.Contains(t, body, "Filter Playground")
 	assert.Contains(t, body, "rafael")
 	assert.Contains(t, body, "maria")
 }
@@ -100,3 +100,24 @@ func TestFilterBuilderSearch_InvalidJSON(t *testing.T) {
 	body := rec.Body.String()
 	assert.Contains(t, body, "Invalid Filter JSON")
 }
+
+func TestFilterBuilderRedirect(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/filter-builder?user=testuser&filter=%7B%7D", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	redirectHandler := func(ctx *echo.Context) error {
+		target := "/url-builder/filters"
+		if qs := ctx.Request().URL.RawQuery; qs != "" {
+			target += "?" + qs
+		}
+		return ctx.Redirect(http.StatusMovedPermanently, target)
+	}
+
+	err := redirectHandler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusMovedPermanently, rec.Code)
+	assert.Equal(t, "/url-builder/filters?user=testuser&filter=%7B%7D", rec.Header().Get("Location"))
+}
+

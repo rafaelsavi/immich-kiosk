@@ -71,7 +71,7 @@ templ URLBuilderForm(c config.Config, d common.URLViewData, extended bool) {
 				} else {
 					<a href={ templ.SafeURL(urlBuilderNavLink("/url-builder", c.Kiosk.Password)) } class="extended-link">{ t("basic_options") }</a>
 				}
-				<a href={ templ.SafeURL(urlBuilderNavLink("/filter-builder", c.Kiosk.Password)) } class="extended-link" style="margin-left: 0.75rem;">Filter Builder</a>
+				<a href={ templ.SafeURL(urlBuilderNavLink("/url-builder/filters", c.Kiosk.Password)) } class="extended-link" style="margin-left: 0.75rem;">Filter Playground</a>
 				<form
 					id="url-builder-form"
 					hx-post="/url-builder/build"
@@ -403,7 +403,7 @@ templ URLBuilderFilter(displayName, formName, helpText, currentValue, password s
 		{{ elementID := "url-builder-" + formName }}
 		<div style="display: flex; justify-content: space-between; align-items: baseline;">
 			<label for={ elementID }>{ displayName }</label>
-			<a href={ templ.SafeURL(urlBuilderNavLink("/filter-builder", password)) } target="_blank" style="font-size: 0.8rem; color: #60a5fa; text-decoration: none;">Test in Filter Builder ↗</a>
+			<a href={ templ.SafeURL(urlBuilderNavLink("/url-builder/filters", password)) } target="_blank" style="font-size: 0.8rem; color: #60a5fa; text-decoration: none;">Test in Filter Playground ↗</a>
 		</div>
 		@URLBuilderHelpText(helpText)
 		<textarea

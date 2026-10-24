@@ -218,7 +218,15 @@ func main() {
 		e.GET("/url-builder", routes.URLBuilderPage(baseConfig, c, false))
 		e.GET("/url-builder/extended", routes.URLBuilderPage(baseConfig, c, true))
 		e.POST("/url-builder/build", routes.BuildURL(baseConfig))
-		e.GET("/filter-builder", routes.FilterBuilderPage(baseConfig, c))
+		e.GET("/url-builder/filters", routes.FilterBuilderPage(baseConfig, c))
+		e.POST("/url-builder/filters/search", routes.FilterBuilderSearch(baseConfig, c))
+		e.GET("/filter-builder", func(ctx *echo.Context) error {
+			target := "/url-builder/filters"
+			if qs := ctx.Request().URL.RawQuery; qs != "" {
+				target += "?" + qs
+			}
+			return ctx.Redirect(http.StatusMovedPermanently, target)
+		})
 		e.POST("/filter-builder/search", routes.FilterBuilderSearch(baseConfig, c))
 	}
 

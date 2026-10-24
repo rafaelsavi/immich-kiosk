@@ -10,103 +10,103 @@ import (
 )
 
 templ FilterBuilderResult(d common.FilterBuilderResultData) {
-	<div id="filter-builder-results" class="filter-builder-results-container">
+	<div id="filter-builder-results" style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%;">
 		if d.Error != "" {
-			<div class="filter-builder-alert filter-builder-alert--error" role="alert">
-				<div class="filter-builder-alert--icon">
-					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<div class="playground-alert playground-alert--error" role="alert">
+				<div style="flex-shrink: 0; padding-top: 2px;">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="10"></circle>
 						<line x1="12" y1="8" x2="12" y2="12"></line>
 						<line x1="12" y1="16" x2="12.01" y2="16"></line>
 					</svg>
 				</div>
-				<div class="filter-builder-alert--content">
-					<h4>Filter Error</h4>
-					<p>{ d.Error }</p>
+				<div>
+					<div style="font-weight: 700; margin-bottom: 0.25rem;">Filter Error</div>
+					<div>{ d.Error }</div>
 				</div>
 			</div>
 		} else if len(d.Assets) == 0 {
-			<div class="filter-builder-alert filter-builder-alert--empty">
-				<div class="filter-builder-alert--icon">
-					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<div class="playground-alert playground-alert--empty">
+				<div style="flex-shrink: 0; padding-top: 2px;">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="11" cy="11" r="8"></circle>
 						<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
 					</svg>
 				</div>
-				<div class="filter-builder-alert--content">
-					<h4>No Assets Found</h4>
-					<p>No photos or videos in Immich matched your filter criteria. Try loosening some conditions or testing with a preset filter.</p>
-				</div>
-			</div>
-		} else {
-			<!-- Stats & Summary -->
-			<div class="filter-builder-summary">
-				<div class="filter-builder-badge-count">
-					<span class="count-pill">{ strconv.Itoa(d.Total) }</span>
-					<span>matching assets in Immich (displaying { strconv.Itoa(len(d.Assets)) } samples)</span>
+				<div>
+					<div style="font-weight: 700; margin-bottom: 0.25rem;">No Matching Assets</div>
+					<div>No photos or videos in Immich matched your filter criteria. Try loosening some conditions.</div>
 				</div>
 			</div>
 		}
 
 		if d.FilterJSON != "" {
-			<!-- Action Cards: Filter JSON, Generated URL & YAML -->
-			<div class="filter-builder-export-grid">
-				<div class="filter-builder-export-card">
-					<div class="filter-builder-export-header">
-						<span>Filter JSON (Search API v2)</span>
-						<div class="filter-builder-export-actions">
-							<button type="button" class="btn-copy" onclick="copySnippet(this, 'filter-json-text')">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-								</svg>
-								<span>Copy JSON</span>
-							</button>
-						</div>
+			<!-- Tabbed Output Card (JSON, URL, YAML) -->
+			<div class="playground-tabs-card">
+				<div class="playground-tabs-header">
+					<button type="button" class="playground-tab-btn active" data-tab="tab-json" onclick="switchPlaygroundTab('tab-json')">
+						⚡ Filter JSON
+					</button>
+					<button type="button" class="playground-tab-btn" data-tab="tab-url" onclick="switchPlaygroundTab('tab-url')">
+						🔗 Slideshow URL
+					</button>
+					<button type="button" class="playground-tab-btn" data-tab="tab-yaml" onclick="switchPlaygroundTab('tab-yaml')">
+						⚙️ config.yaml
+					</button>
+				</div>
+
+				<!-- Tab 1: Filter JSON -->
+				<div id="tab-json" class="playground-tab-pane active">
+					<div class="playground-tab-actions">
+						<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'filter-json-text')">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+							</svg>
+							<span>Copy JSON</span>
+						</button>
 					</div>
-					<div class="filter-builder-code-block">
+					<div class="code-preview-box">
 						<pre id="filter-json-text">{ d.FilterJSON }</pre>
 					</div>
 				</div>
 
-				<div class="filter-builder-export-card">
-					<div class="filter-builder-export-header">
-						<span>Direct Kiosk Slideshow URL</span>
-						<div class="filter-builder-export-actions">
-							<button type="button" class="btn-copy" onclick="copySnippet(this, 'kiosk-url-text')">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-								</svg>
-								<span>Copy URL</span>
-							</button>
-							<a href={ templ.SafeURL(d.KioskURL) } target="_blank" class="btn-launch" title="Open slideshow in new tab">
-								<span>Launch</span>
-								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-									<polyline points="15 3 21 3 21 9"></polyline>
-									<line x1="10" y1="14" x2="21" y2="3"></line>
-								</svg>
-							</a>
-							<a href={ templ.SafeURL(filterBuilderURL(d.FilterJSON, d.KioskURL)) } target="_blank" class="btn-launch" title="Customize with duration, clock, weather, and transitions in URL Builder">
-								<span>Configure in URL Builder</span>
-								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-									<polyline points="15 3 21 3 21 9"></polyline>
-									<line x1="10" y1="14" x2="21" y2="3"></line>
-								</svg>
-							</a>
-						</div>
+				<!-- Tab 2: Direct Slideshow URL -->
+				<div id="tab-url" class="playground-tab-pane">
+					<div class="playground-tab-actions">
+						<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'kiosk-url-text')">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+							</svg>
+							<span>Copy URL</span>
+						</button>
+						<a href={ templ.SafeURL(d.KioskURL) } target="_blank" class="btn-tab-action btn-launch" title="Open slideshow in new tab">
+							<span>Launch Slideshow</span>
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+								<polyline points="15 3 21 3 21 9"></polyline>
+								<line x1="10" y1="14" x2="21" y2="3"></line>
+							</svg>
+						</a>
+						<a href={ templ.SafeURL(filterBuilderURL(d.FilterJSON, d.KioskURL)) } target="_blank" class="btn-tab-action btn-configure" title="Configure duration, weather, transitions in URL Builder">
+							<span>Customize in URL Builder</span>
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+								<polyline points="15 3 21 3 21 9"></polyline>
+								<line x1="10" y1="14" x2="21" y2="3"></line>
+							</svg>
+						</a>
 					</div>
-					<div class="filter-builder-code-block">
+					<div class="code-preview-box">
 						<code id="kiosk-url-text">{ d.KioskURL }</code>
 					</div>
 				</div>
 
-				<div class="filter-builder-export-card">
-					<div class="filter-builder-export-header">
-						<span>Redirect Config Snippet (config.yaml)</span>
-						<button type="button" class="btn-copy" onclick="copySnippet(this, 'redirect-yaml-text')">
+				<!-- Tab 3: config.yaml snippet -->
+				<div id="tab-yaml" class="playground-tab-pane">
+					<div class="playground-tab-actions">
+						<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'redirect-yaml-text')">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
 								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -114,7 +114,7 @@ templ FilterBuilderResult(d common.FilterBuilderResultData) {
 							<span>Copy YAML</span>
 						</button>
 					</div>
-					<div class="filter-builder-code-block">
+					<div class="code-preview-box">
 						<pre id="redirect-yaml-text">{ d.RedirectYAML }</pre>
 					</div>
 				</div>
@@ -122,96 +122,69 @@ templ FilterBuilderResult(d common.FilterBuilderResultData) {
 		}
 
 		if len(d.Assets) > 0 {
+			<!-- Live Matching Assets Simulation -->
+			<div class="simulation-gallery-card">
+				<div class="simulation-gallery-header">
+					<span style="font-weight: 700; font-size: 0.95rem; color: #0f172a;">Live Simulation</span>
+					<span class="count-badge">{ strconv.Itoa(d.Total) } matching in Immich (showing { strconv.Itoa(len(d.Assets)) })</span>
+				</div>
 
-			<!-- Asset Miniature Grid -->
-			<div class="filter-builder-gallery-header">
-				<h3>Asset Miniatures</h3>
-				<span class="gallery-subtitle">Click miniature to view full asset</span>
-			</div>
-
-			<div class="filter-builder-grid">
-				for _, item := range d.Assets {
-					<div class="filter-builder-card">
-						<div class="filter-builder-card-media">
-							<a href={ templ.SafeURL(item.ThumbnailURL) } target="_blank" class="filter-builder-card-link">
-								<img
-									src={ item.ThumbnailURL }
-									alt={ item.Filename }
-									loading="lazy"
-									class="filter-builder-card-thumb"
-									onerror="this.onerror=null; this.style.opacity='0.25';"
-								/>
-							</a>
-
-							<!-- Floating Badges -->
-							<div class="filter-builder-card-badges">
-								if item.Type == "VIDEO" {
-									<span class="badge badge-video" title="Video">▶ VIDEO</span>
-								}
-								if item.IsFavorite {
-									<span class="badge badge-favorite" title="Favorite">♥</span>
-								}
-								if item.Rating > 0 {
-									<span class="badge badge-rating" title={ fmt.Sprintf("Rating: %d stars", item.Rating) }>
-										★ { strconv.Itoa(item.Rating) }
-									</span>
-								}
-								if item.User != "" {
-									<span class="badge badge-user" title={ "Account: " + item.User }>
-										{ "@" + item.User }
-									</span>
-								}
-							</div>
-						</div>
-
-						<div class="filter-builder-card-meta">
-							if item.City != "" || item.Country != "" {
-								<div class="filter-builder-meta-location">
-									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-										<circle cx="12" cy="10" r="3"></circle>
-									</svg>
-									<span>{ locationString(item.City, item.Country) }</span>
-								</div>
-							}
-							if item.TakenAt != "" {
-								<div class="filter-builder-meta-date">
-									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-										<line x1="16" y1="2" x2="16" y2="6"></line>
-										<line x1="8" y1="2" x2="8" y2="6"></line>
-										<line x1="3" y1="10" x2="21" y2="10"></line>
-									</svg>
-									<span>{ item.TakenAt }</span>
-								</div>
-							}
-							if len(item.People) > 0 {
-								<div class="filter-builder-meta-people">
-									for _, p := range item.People {
-										<span class="person-tag">{ p }</span>
+				<div class="simulation-grid">
+					for _, item := range d.Assets {
+						<div class="simulation-thumb-card">
+							<div class="thumb-media">
+								<a href={ templ.SafeURL(item.ThumbnailURL) } target="_blank" title={ item.Filename }>
+									<img
+										src={ item.ThumbnailURL }
+										alt={ item.Filename }
+										loading="lazy"
+										class="thumb-img"
+										onerror="this.onerror=null; this.style.opacity='0.25';"
+									/>
+								</a>
+								<div class="thumb-overlay-badges">
+									if item.Type == "VIDEO" {
+										<span class="overlay-pill video">▶ VIDEO</span>
+									}
+									if item.IsFavorite {
+										<span class="overlay-pill fav">♥</span>
+									}
+									if item.Rating > 0 {
+										<span class="overlay-pill rating">★ { strconv.Itoa(item.Rating) }</span>
+									}
+									if item.User != "" {
+										<span class="overlay-pill user">{ "@" + item.User }</span>
 									}
 								</div>
-							}
-							<div class="filter-builder-meta-filename" title={ item.Filename }>
-								{ truncateFilename(item.Filename, 22) }
+							</div>
+
+							<div class="thumb-meta">
+								if item.TakenAt != "" {
+									<div class="thumb-meta-date">{ item.TakenAt }</div>
+								}
+								if item.City != "" || item.Country != "" {
+									<div class="thumb-meta-location" title={ locationString(item.City, item.Country) }>
+										📍 { locationString(item.City, item.Country) }
+									</div>
+								}
+								if len(item.People) > 0 {
+									<div class="thumb-meta-people" title={ strings.Join(item.People, ", ") }>
+										👤 { strings.Join(item.People, ", ") }
+									</div>
+								}
 							</div>
 						</div>
-					</div>
-				}
+					}
+				</div>
 			</div>
 		}
-	</div>
-}
 
-func truncateFilename(name string, maxLen int) string {
-	name = strings.TrimSpace(name)
-	if len(name) <= maxLen {
-		return name
-	}
-	if maxLen <= 5 {
-		return name[:maxLen]
-	}
-	return name[:maxLen-3] + "..."
+		<script>
+			if (window.activePlaygroundTab) {
+				switchPlaygroundTab(window.activePlaygroundTab);
+			}
+		</script>
+	</div>
 }
 
 func locationString(city, country string) string {
