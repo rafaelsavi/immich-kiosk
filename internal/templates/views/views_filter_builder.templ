@@ -1,6 +1,7 @@
 package views
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -578,6 +579,302 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					overflow: hidden;
 					text-overflow: ellipsis;
 				}
+
+				/* Visual Rule Tree Styling */
+				.rt-tree-card {
+					display: flex;
+					flex-direction: column;
+					gap: 1rem;
+				}
+
+				.rt-card-header {
+					display: flex;
+					align-items: flex-start;
+					justify-content: space-between;
+					flex-wrap: wrap;
+					gap: 0.75rem;
+					padding-bottom: 0.75rem;
+					border-bottom: 1px solid #f1f5f9;
+				}
+
+				.rt-btn {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.3rem;
+					padding: 0.3rem 0.65rem;
+					font-size: 0.78rem;
+					font-weight: 600;
+					border-radius: 0.375rem;
+					border: 1px solid #cbd5e1;
+					background: #ffffff;
+					color: #334155;
+					cursor: pointer;
+					transition: all 0.15s ease;
+				}
+
+				.rt-btn:hover {
+					background: #f1f5f9;
+					border-color: #94a3b8;
+					color: #0f172a;
+				}
+
+				.rt-group {
+					background: #ffffff;
+					border: 1px solid #e2e8f0;
+					border-radius: 0.6rem;
+					padding: 0.85rem;
+					margin-bottom: 0.75rem;
+					position: relative;
+				}
+
+				.rt-group.rt-root {
+					border-color: #cbd5e1;
+					box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+				}
+
+				.rt-group.rt-subgroup {
+					background: #f8fafc;
+					border-color: #e2e8f0;
+					margin-top: 0.5rem;
+				}
+
+				.rt-group-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					flex-wrap: wrap;
+					gap: 0.5rem;
+					margin-bottom: 0.75rem;
+				}
+
+				.rt-combiner-wrap {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.5rem;
+				}
+
+				.rt-combiner-pills {
+					display: inline-flex;
+					background: #e2e8f0;
+					padding: 2px;
+					border-radius: 0.375rem;
+				}
+
+				.rt-combiner-btn {
+					padding: 0.25rem 0.6rem;
+					font-size: 0.75rem;
+					font-weight: 700;
+					border: none;
+					background: transparent;
+					color: #64748b;
+					border-radius: 0.25rem;
+					cursor: pointer;
+					transition: all 0.15s ease;
+				}
+
+				.rt-combiner-btn.active.and {
+					background: #0284c7;
+					color: #ffffff;
+				}
+
+				.rt-combiner-btn.active.or {
+					background: #8b5cf6;
+					color: #ffffff;
+				}
+
+				.rt-group-hint {
+					font-size: 0.8rem;
+					color: #64748b;
+					font-weight: 500;
+				}
+
+				.rt-group-actions {
+					display: flex;
+					align-items: center;
+					gap: 0.4rem;
+				}
+
+				.rt-group-children {
+					display: flex;
+					flex-direction: column;
+					gap: 0.6rem;
+					padding-left: 0.85rem;
+					border-left: 3px solid #cbd5e1;
+					transition: border-color 0.2s ease;
+				}
+
+				.rt-group[data-combiner="AND"] > .rt-group-children {
+					border-left-color: #0284c7;
+				}
+
+				.rt-group[data-combiner="OR"] > .rt-group-children {
+					border-left-color: #8b5cf6;
+				}
+
+				.rt-empty-group {
+					padding: 1rem;
+					text-align: center;
+					font-size: 0.82rem;
+					color: #94a3b8;
+					border: 1px dashed #cbd5e1;
+					border-radius: 0.375rem;
+					background: #ffffff;
+				}
+
+				.rt-rule {
+					display: flex;
+					align-items: center;
+					flex-wrap: wrap;
+					gap: 0.5rem;
+					background: #ffffff;
+					border: 1px solid #e2e8f0;
+					border-radius: 0.45rem;
+					padding: 0.5rem 0.65rem;
+					box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+					transition: all 0.15s ease;
+				}
+
+				.rt-rule:hover {
+					border-color: #cbd5e1;
+					box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+				}
+
+				.rt-select-field {
+					min-width: 130px;
+					padding: 0.4rem 0.5rem;
+					font-size: 0.82rem;
+					font-weight: 600;
+					color: #0f172a;
+					border: 1px solid #cbd5e1;
+					border-radius: 0.375rem;
+					background: #f8fafc;
+				}
+
+				.rt-select-operator {
+					min-width: 150px;
+					padding: 0.4rem 0.5rem;
+					font-size: 0.82rem;
+					font-weight: 600;
+					color: #0284c7;
+					border: 1px solid #cbd5e1;
+					border-radius: 0.375rem;
+					background: #ffffff;
+				}
+
+				.rt-value-box {
+					flex: 1;
+					min-width: 180px;
+					position: relative;
+				}
+
+				.rt-btn-del {
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					width: 28px;
+					height: 28px;
+					padding: 0;
+					color: #94a3b8;
+					background: transparent;
+					border: none;
+					border-radius: 0.375rem;
+					cursor: pointer;
+					font-size: 0.95rem;
+					font-weight: bold;
+					transition: all 0.15s ease;
+				}
+
+				.rt-btn-del:hover {
+					background: #fee2e2;
+					color: #ef4444;
+				}
+
+				/* Chips Multi-select */
+				.rt-chips-container {
+					display: flex;
+					flex-wrap: wrap;
+					align-items: center;
+					gap: 0.25rem;
+					min-height: 34px;
+					padding: 0.25rem 0.4rem;
+					border: 1px solid #cbd5e1;
+					border-radius: 0.375rem;
+					background: #ffffff;
+					cursor: text;
+				}
+
+				.rt-chip {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.25rem;
+					padding: 0.15rem 0.45rem;
+					font-size: 0.75rem;
+					font-weight: 600;
+					background: #e0f2fe;
+					color: #0369a1;
+					border-radius: 0.25rem;
+				}
+
+				.rt-chip-x {
+					cursor: pointer;
+					color: #0284c7;
+					font-weight: bold;
+					font-size: 0.75rem;
+				}
+
+				.rt-chip-x:hover {
+					color: #ef4444;
+				}
+
+				.rt-chip-input {
+					flex: 1;
+					min-width: 80px;
+					border: none;
+					outline: none;
+					font-size: 0.8rem;
+					padding: 0.15rem 0.25rem;
+					background: transparent;
+				}
+
+				.rt-dropdown-menu {
+					position: absolute;
+					top: calc(100% + 4px);
+					left: 0;
+					right: 0;
+					max-height: 220px;
+					overflow-y: auto;
+					background: #ffffff;
+					border: 1px solid #cbd5e1;
+					border-radius: 0.375rem;
+					box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+					z-index: 100;
+					display: none;
+				}
+
+				.rt-dropdown-menu.open {
+					display: block;
+				}
+
+				.rt-dropdown-item {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 0.4rem 0.65rem;
+					font-size: 0.8rem;
+					color: #1e293b;
+					cursor: pointer;
+					transition: background 0.1s ease;
+				}
+
+				.rt-dropdown-item:hover {
+					background: #f1f5f9;
+				}
+
+				.rt-dropdown-item.selected {
+					background: #f0f9ff;
+					color: #0284c7;
+					font-weight: 600;
+				}
 			</style>
 			<script>
 				window.activePlaygroundTab = 'tab-json';
@@ -630,6 +927,702 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					setPlaygroundLimit(next);
 				}
 
+				// ==========================================
+				// VISUAL RULE TREE ENGINE (PATTERN 1)
+				// ==========================================
+				window.IMMICH_METADATA = {};
+
+				function loadImmichMetadata() {
+					try {
+						const metaEl = document.getElementById('immich-filter-metadata');
+						if (metaEl) {
+							const raw = metaEl.value || metaEl.getAttribute('data-metadata');
+							if (raw && raw.trim() !== '') {
+								window.IMMICH_METADATA = JSON.parse(raw);
+							}
+						}
+					} catch (e) {
+						console.error('Failed to parse IMMICH_METADATA:', e);
+					}
+				}
+
+				function escapeHtml(str) {
+					if (!str) return '';
+					return String(str)
+						.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;')
+						.replace(/"/g, '&quot;')
+						.replace(/'/g, '&#39;');
+				}
+
+				function escapeJsString(str) {
+					if (!str) return '';
+					return String(str)
+						.replace(/\\/g, '\\\\')
+						.replace(/'/g, "\\'")
+						.replace(/"/g, '\\"');
+				}
+
+				let ruleTreeState = {
+					id: 'root',
+					type: 'group',
+					combiner: 'AND',
+					children: [
+						{ id: 'r_1', type: 'rule', field: 'people', operator: 'all', value: [] }
+					]
+				};
+
+				function generateNodeId(prefix) {
+					return prefix + '_' + Math.random().toString(36).substr(2, 9);
+				}
+
+				function findNode(group, id) {
+					if (group.id === id) return group;
+					if (!group.children) return null;
+					for (const child of group.children) {
+						if (child.id === id) return child;
+						if (child.type === 'group') {
+							const res = findNode(child, id);
+							if (res) return res;
+						}
+					}
+					return null;
+				}
+
+				function findGroupAndIndex(group, id) {
+					if (!group || !group.children) return null;
+					for (let i = 0; i < group.children.length; i++) {
+						if (group.children[i].id === id) {
+							return { parent: group, index: i, node: group.children[i] };
+						}
+						if (group.children[i].type === 'group') {
+							const res = findGroupAndIndex(group.children[i], id);
+							if (res) return res;
+						}
+					}
+					return null;
+				}
+
+				function rtAddRule(groupId, defaultField) {
+					const group = findNode(ruleTreeState, groupId);
+					if (!group || group.type !== 'group') return;
+					const field = defaultField || 'albums';
+					const op = (field === 'people') ? 'all' : (['albums', 'tags'].includes(field) ? 'any' : (['country', 'state', 'city', 'camera'].includes(field) ? 'in' : 'true'));
+					group.children.push({
+						id: generateNodeId('r'),
+						type: 'rule',
+						field: field,
+						operator: op,
+						value: []
+					});
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+				function rtAddGroup(groupId) {
+					const group = findNode(ruleTreeState, groupId);
+					if (!group || group.type !== 'group') return;
+					const childCombiner = group.combiner === 'AND' ? 'OR' : 'AND';
+					group.children.push({
+						id: generateNodeId('g'),
+						type: 'group',
+						combiner: childCombiner,
+						children: [
+							{ id: generateNodeId('r'), type: 'rule', field: 'albums', operator: 'any', value: [] }
+						]
+					});
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+				function rtDeleteNode(id) {
+					const info = findGroupAndIndex(ruleTreeState, id);
+					if (!info) return;
+					info.parent.children.splice(info.index, 1);
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+				function rtSetCombiner(groupId, combiner) {
+					const group = findNode(ruleTreeState, groupId);
+					if (!group) return;
+					group.combiner = combiner;
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+				function rtChangeField(ruleId, newField) {
+					const rule = findNode(ruleTreeState, ruleId);
+					if (!rule) return;
+					rule.field = newField;
+					if (newField === 'people') {
+						rule.operator = 'all';
+						rule.value = [];
+					} else if (['albums', 'tags'].includes(newField)) {
+						rule.operator = 'any';
+						rule.value = [];
+					} else if (['country', 'state', 'city', 'camera'].includes(newField)) {
+						rule.operator = 'in';
+						rule.value = [];
+					} else if (['favorite', 'has_people', 'has_albums', 'has_tags'].includes(newField)) {
+						rule.operator = 'true';
+						rule.value = true;
+					} else if (newField === 'media_type') {
+						rule.operator = 'IMAGE';
+						rule.value = 'IMAGE';
+					} else if (newField === 'rating') {
+						rule.operator = '1';
+						rule.value = 1;
+					} else if (newField === 'date') {
+						rule.operator = 'after';
+						rule.value = '';
+					}
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+				function rtChangeOperator(ruleId, newOp) {
+					const rule = findNode(ruleTreeState, ruleId);
+					if (!rule) return;
+					rule.operator = newOp;
+					if (['favorite', 'has_people', 'has_albums', 'has_tags'].includes(rule.field)) {
+						rule.value = (newOp === 'true');
+					} else if (rule.field === 'media_type') {
+						rule.value = newOp;
+					} else if (rule.field === 'rating') {
+						rule.value = parseInt(newOp, 10) || 1;
+					}
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+				function rtToggleMultiValue(ruleId, val) {
+					const rule = findNode(ruleTreeState, ruleId);
+					if (!rule) return;
+					if (!Array.isArray(rule.value)) rule.value = [];
+					const idx = rule.value.indexOf(val);
+					if (idx >= 0) {
+						rule.value.splice(idx, 1);
+					} else {
+						rule.value.push(val);
+					}
+					renderRuleTree();
+					syncRuleTree();
+					const dd = document.getElementById('dropdown_' + ruleId);
+					if (dd) dd.classList.add('open');
+					const input = dd ? dd.parentElement.querySelector('.rt-chip-input') : null;
+					if (input) input.focus();
+				}
+
+				function rtRemoveMultiValue(ruleId, val, e) {
+					if (e) {
+						e.stopPropagation();
+						e.preventDefault();
+					}
+					const rule = findNode(ruleTreeState, ruleId);
+					if (!rule || !Array.isArray(rule.value)) return;
+					rule.value = rule.value.filter(v => v !== val);
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+				function rtSetDateValue(ruleId, prop, val) {
+					const rule = findNode(ruleTreeState, ruleId);
+					if (!rule) return;
+					rule[prop] = val;
+					syncRuleTree();
+				}
+
+				function rtClearAll() {
+					ruleTreeState = {
+						id: 'root',
+						type: 'group',
+						combiner: 'AND',
+						children: []
+					};
+					renderRuleTree();
+					syncRuleTree();
+				}
+
+
+
+				function getFieldOptionsList(field) {
+					if (!window.IMMICH_METADATA || Object.keys(window.IMMICH_METADATA).length === 0) {
+						loadImmichMetadata();
+					}
+					const meta = window.IMMICH_METADATA || {};
+					if (field === 'people') return (meta.people || []).map(p => ({ value: p.id, label: p.label || p.name }));
+					if (field === 'albums') return (meta.albums || []).map(a => ({ value: a.id, label: a.label || a.albumName }));
+					if (field === 'tags') return (meta.tags || []).map(t => ({ value: t.id, label: t.label || t.name }));
+					if (field === 'country') return (meta.countries || []).map(c => ({ value: c, label: c }));
+					if (field === 'state') return (meta.states || []).map(s => ({ value: s, label: s }));
+					if (field === 'city') return (meta.cities || []).map(c => ({ value: c, label: c }));
+					if (field === 'camera') return (meta.cameras || []).map(m => ({ value: m, label: m }));
+					return [];
+				}
+
+				function rtOpenDropdown(ruleId, e) {
+					if (e) e.stopPropagation();
+					document.querySelectorAll('.rt-dropdown-menu.open').forEach(el => {
+						if (el.id !== 'dropdown_' + ruleId) el.classList.remove('open');
+					});
+					const dd = document.getElementById('dropdown_' + ruleId);
+					if (dd) dd.classList.add('open');
+				}
+
+				function rtFilterDropdown(ruleId, query) {
+					const dd = document.getElementById('dropdown_' + ruleId);
+					if (!dd) return;
+					const q = (query || '').toLowerCase().trim();
+					let visibleCount = 0;
+					dd.querySelectorAll('.rt-dropdown-item').forEach(item => {
+						const txt = item.textContent.toLowerCase();
+						const matches = txt.includes(q);
+						item.style.display = matches ? 'flex' : 'none';
+						if (matches) visibleCount++;
+					});
+					let noMatch = dd.querySelector('.rt-no-match');
+					if (visibleCount === 0) {
+						if (!noMatch) {
+							noMatch = document.createElement('div');
+							noMatch.className = 'rt-no-match';
+							noMatch.style.cssText = 'padding: 0.5rem; color: #94a3b8; font-size: 0.75rem;';
+							noMatch.textContent = 'No matching options';
+							dd.appendChild(noMatch);
+						}
+						noMatch.style.display = 'block';
+					} else if (noMatch) {
+						noMatch.style.display = 'none';
+					}
+				}
+
+				function renderGroupHTML(group, isRoot) {
+					const isAnd = group.combiner === 'AND';
+					const hasChildren = group.children && group.children.length > 0;
+					let delBtn = '';
+					if (!isRoot) {
+						delBtn = '<button type="button" class="rt-btn-del" onclick="rtDeleteNode(\'' + group.id + '\')" title="Delete group">✕</button>';
+					}
+
+					let header = `
+						<div class="rt-group-header">
+							<div class="rt-combiner-wrap">
+								<div class="rt-combiner-pills">
+									<button type="button" class="rt-combiner-btn and ${isAnd ? 'active and' : ''}" onclick="rtSetCombiner('${group.id}', 'AND')">ALL (AND)</button>
+									<button type="button" class="rt-combiner-btn or ${!isAnd ? 'active or' : ''}" onclick="rtSetCombiner('${group.id}', 'OR')">ANY (OR)</button>
+								</div>
+								<span class="rt-group-hint">of the following are true:</span>
+							</div>
+							<div class="rt-group-actions">
+								<button type="button" class="rt-btn" onclick="rtAddRule('${group.id}')">+ Condition</button>
+								<button type="button" class="rt-btn" onclick="rtAddGroup('${group.id}')">+ Group</button>
+								${delBtn}
+							</div>
+						</div>
+					`;
+
+					let childrenHTML = '<div class="rt-group-children">';
+					if (!hasChildren) {
+						childrenHTML += `<div class="rt-empty-group">No conditions yet. Click "+ Condition" or "+ Group" to add criteria.</div>`;
+					} else {
+						for (const child of group.children) {
+							if (child.type === 'rule') {
+								childrenHTML += renderRuleHTML(child);
+							} else if (child.type === 'group') {
+								childrenHTML += renderGroupHTML(child, false);
+							}
+						}
+					}
+					childrenHTML += '</div>';
+
+					return `
+						<div class="rt-group ${isRoot ? 'rt-root' : 'rt-subgroup'}" id="${group.id}" data-combiner="${group.combiner}">
+							${header}
+							${childrenHTML}
+						</div>
+					`;
+				}
+
+				function renderRuleHTML(rule) {
+					const fieldOptions = [
+						{ value: 'people', label: '👥 People' },
+						{ value: 'albums', label: '📁 Albums' },
+						{ value: 'tags', label: '🏷️ Tags' },
+						{ value: 'country', label: '🌍 Country' },
+						{ value: 'state', label: '🗺️ State / Region' },
+						{ value: 'city', label: '🏙️ City' },
+						{ value: 'camera', label: '📷 Camera Model' },
+						{ value: 'favorite', label: '⭐ Favorite' },
+						{ value: 'media_type', label: '🎬 Media Type' },
+						{ value: 'date', label: '📅 Date Taken' },
+						{ value: 'has_people', label: '👤 Has People' },
+						{ value: 'has_albums', label: '📁 Has Albums' },
+						{ value: 'has_tags', label: '🏷️ Has Tags' },
+						{ value: 'rating', label: '⭐ Minimum Rating' }
+					];
+
+					let fieldSelect = `<select class="rt-select-field" onchange="rtChangeField('${rule.id}', this.value)">`;
+					for (const opt of fieldOptions) {
+						fieldSelect += `<option value="${opt.value}" ${rule.field === opt.value ? 'selected' : ''}>${opt.label}</option>`;
+					}
+					fieldSelect += `</select>`;
+
+					// Operators
+					let opSelect = `<select class="rt-select-operator" onchange="rtChangeOperator('${rule.id}', this.value)">`;
+					if (rule.field === 'people') {
+						opSelect += `<option value="all" ${rule.operator === 'all' ? 'selected' : ''}>contains ALL of (both/all)</option>`;
+						opSelect += `<option value="any" ${rule.operator === 'any' ? 'selected' : ''}>contains ANY of (at least one)</option>`;
+						opSelect += `<option value="none" ${rule.operator === 'none' ? 'selected' : ''}>contains NONE of (exclude)</option>`;
+					} else if (['albums', 'tags'].includes(rule.field)) {
+						opSelect += `<option value="any" ${rule.operator === 'any' ? 'selected' : ''}>is in ANY of</option>`;
+						opSelect += `<option value="all" ${rule.operator === 'all' ? 'selected' : ''}>is in ALL of</option>`;
+						opSelect += `<option value="none" ${rule.operator === 'none' ? 'selected' : ''}>is in NONE of (exclude)</option>`;
+					} else if (['country', 'state', 'city', 'camera'].includes(rule.field)) {
+						opSelect += `<option value="in" ${rule.operator === 'in' ? 'selected' : ''}>is one of (IN)</option>`;
+						opSelect += `<option value="notIn" ${rule.operator === 'notIn' ? 'selected' : ''}>is NOT one of</option>`;
+						opSelect += `<option value="eq" ${rule.operator === 'eq' ? 'selected' : ''}>equals (EQ)</option>`;
+					} else if (['favorite', 'has_people', 'has_albums', 'has_tags'].includes(rule.field)) {
+						opSelect += `<option value="true" ${rule.operator === 'true' ? 'selected' : ''}>is True (Yes)</option>`;
+						opSelect += `<option value="false" ${rule.operator === 'false' ? 'selected' : ''}>is False (No)</option>`;
+					} else if (rule.field === 'media_type') {
+						opSelect += `<option value="IMAGE" ${rule.operator === 'IMAGE' ? 'selected' : ''}>Photos only</option>`;
+						opSelect += `<option value="VIDEO" ${rule.operator === 'VIDEO' ? 'selected' : ''}>Videos only</option>`;
+						opSelect += `<option value="MOTION" ${rule.operator === 'MOTION' ? 'selected' : ''}>Motion photos</option>`;
+					} else if (rule.field === 'rating') {
+						opSelect += `<option value="1" ${rule.operator === '1' ? 'selected' : ''}>1+ Stars</option>`;
+						opSelect += `<option value="2" ${rule.operator === '2' ? 'selected' : ''}>2+ Stars</option>`;
+						opSelect += `<option value="3" ${rule.operator === '3' ? 'selected' : ''}>3+ Stars</option>`;
+						opSelect += `<option value="4" ${rule.operator === '4' ? 'selected' : ''}>4+ Stars</option>`;
+						opSelect += `<option value="5" ${rule.operator === '5' ? 'selected' : ''}>5 Stars only</option>`;
+					} else if (rule.field === 'date') {
+						opSelect += `<option value="after" ${rule.operator === 'after' ? 'selected' : ''}>Taken after</option>`;
+						opSelect += `<option value="before" ${rule.operator === 'before' ? 'selected' : ''}>Taken before</option>`;
+						opSelect += `<option value="between" ${rule.operator === 'between' ? 'selected' : ''}>Between dates</option>`;
+					}
+					opSelect += `</select>`;
+
+					// Value widget
+					let valueBox = `<div class="rt-value-box">`;
+					const isMulti = ['people', 'albums', 'tags', 'country', 'state', 'city', 'camera'].includes(rule.field);
+
+					if (isMulti) {
+						const available = getFieldOptionsList(rule.field);
+						const selectedVals = Array.isArray(rule.value) ? rule.value : [];
+
+						let chips = '';
+						for (const val of selectedVals) {
+							const matched = available.find(a => a.value === val);
+							const label = matched ? matched.label : val;
+							chips += `
+								<span class="rt-chip">
+									<span>${escapeHtml(label)}</span>
+									<span class="rt-chip-x" onclick="rtRemoveMultiValue('${escapeJsString(rule.id)}', '${escapeJsString(val)}', event)">✕</span>
+								</span>
+							`;
+						}
+
+						let dropdownItems = '';
+						for (const opt of available) {
+							const isSel = selectedVals.includes(opt.value);
+							dropdownItems += `
+								<div class="rt-dropdown-item ${isSel ? 'selected' : ''}" onclick="rtToggleMultiValue('${escapeJsString(rule.id)}', '${escapeJsString(opt.value)}')">
+									<span>${escapeHtml(opt.label)}</span>
+									${isSel ? '<span>✓</span>' : ''}
+								</div>
+							`;
+						}
+
+						valueBox += `
+							<div class="rt-chips-container" onclick="rtOpenDropdown('${escapeJsString(rule.id)}', event)">
+								${chips}
+								<input type="text" class="rt-chip-input" placeholder="${selectedVals.length ? '' : 'Type or select...'}" onfocus="rtOpenDropdown('${escapeJsString(rule.id)}', event)" oninput="rtFilterDropdown('${escapeJsString(rule.id)}', this.value)">
+							</div>
+							<div class="rt-dropdown-menu" id="dropdown_${escapeJsString(rule.id)}">
+								${dropdownItems || '<div style="padding: 0.5rem; color: #94a3b8; font-size: 0.75rem;">No options found</div>'}
+							</div>
+						`;
+					} else if (rule.field === 'date') {
+						if (rule.operator === 'between') {
+							valueBox += `
+								<div style="display: flex; align-items: center; gap: 0.35rem;">
+									<input type="date" value="${rule.dateAfter || ''}" onchange="rtSetDateValue('${rule.id}', 'dateAfter', this.value)" style="padding: 0.35rem; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;">
+									<span style="font-size: 0.75rem; color: #64748b;">to</span>
+									<input type="date" value="${rule.dateBefore || ''}" onchange="rtSetDateValue('${rule.id}', 'dateBefore', this.value)" style="padding: 0.35rem; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;">
+								</div>
+							`;
+						} else {
+							const prop = (rule.operator === 'before') ? 'dateBefore' : 'dateAfter';
+							valueBox += `
+								<input type="date" value="${rule[prop] || ''}" onchange="rtSetDateValue('${rule.id}', '${prop}', this.value)" style="padding: 0.35rem; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; width: 100%;">
+							`;
+						}
+					} else {
+						valueBox += `<span style="font-size: 0.8rem; color: #64748b; font-style: italic;">Condition configured</span>`;
+					}
+					valueBox += `</div>`;
+
+					return `
+						<div class="rt-rule" id="${rule.id}">
+							${fieldSelect}
+							${opSelect}
+							${valueBox}
+							<button type="button" class="rt-btn-del" onclick="rtDeleteNode('${rule.id}')" title="Delete condition">✕</button>
+						</div>
+					`;
+				}
+
+				function renderRuleTree() {
+					const mount = document.getElementById('rule-tree-mount');
+					if (!mount) return;
+					mount.innerHTML = renderGroupHTML(ruleTreeState, true);
+				}
+
+				function compileRuleToBranch(rule) {
+					const branch = {};
+					const { field, operator, value } = rule;
+					if (['favorite', 'media_type', 'rating', 'has_people', 'has_albums', 'has_tags'].includes(field)) {
+						// These have valid implicit values
+					} else if (field === 'date') {
+						if (!rule.dateAfter && !rule.dateBefore) return null;
+					} else {
+						if (!value || (Array.isArray(value) && value.length === 0)) return null;
+					}
+
+					switch (field) {
+						case 'people':
+							branch.personIds = { [operator || 'all']: Array.isArray(value) ? value : [value] };
+							break;
+						case 'albums':
+							branch.albumIds = { [operator || 'any']: Array.isArray(value) ? value : [value] };
+							break;
+						case 'tags':
+							branch.tagIds = { [operator || 'any']: Array.isArray(value) ? value : [value] };
+							break;
+						case 'country':
+							if (operator === 'eq') branch.country = { eq: Array.isArray(value) ? value[0] : value };
+							else if (operator === 'notIn') branch.country = { notIn: Array.isArray(value) ? value : [value] };
+							else branch.country = { in: Array.isArray(value) ? value : [value] };
+							break;
+						case 'state':
+							if (operator === 'notIn') branch.state = { notIn: Array.isArray(value) ? value : [value] };
+							else branch.state = { in: Array.isArray(value) ? value : [value] };
+							break;
+						case 'city':
+							if (operator === 'notIn') branch.city = { notIn: Array.isArray(value) ? value : [value] };
+							else branch.city = { in: Array.isArray(value) ? value : [value] };
+							break;
+						case 'camera':
+							if (operator === 'notIn') branch.model = { notIn: Array.isArray(value) ? value : [value] };
+							else branch.model = { in: Array.isArray(value) ? value : [value] };
+							break;
+						case 'favorite':
+							branch.isFavorite = { eq: value === 'true' || value === true };
+							break;
+						case 'media_type':
+							if (value === 'MOTION') {
+								branch.isMotion = { eq: true };
+							} else {
+								branch.type = { in: [value] };
+							}
+							break;
+						case 'rating':
+							branch.rating = { gte: parseInt(value, 10) || 1 };
+							break;
+						case 'has_people':
+							branch.hasPeople = { eq: value === 'true' || value === true };
+							break;
+						case 'has_albums':
+							branch.hasAlbums = { eq: value === 'true' || value === true };
+							break;
+						case 'has_tags':
+							branch.hasTags = { eq: value === 'true' || value === true };
+							break;
+						case 'date':
+							if (rule.dateAfter || rule.dateBefore) {
+								branch.takenAt = {};
+								if (rule.dateAfter) branch.takenAt.gte = rule.dateAfter;
+								if (rule.dateBefore) branch.takenAt.lte = rule.dateBefore;
+							}
+							break;
+					}
+					return Object.keys(branch).length > 0 ? branch : null;
+				}
+
+				function compileGroupToAST(group) {
+					if (!group || !group.children || group.children.length === 0) return {};
+					const combiner = (group.combiner || 'AND').toUpperCase();
+
+					if (combiner === 'AND') {
+						const root = {};
+						const orBranches = [];
+
+						for (const child of group.children) {
+							if (child.type === 'rule') {
+								const b = compileRuleToBranch(child);
+								if (b) Object.assign(root, b);
+							} else if (child.type === 'group') {
+								const childCombiner = (child.combiner || 'AND').toUpperCase();
+								if (childCombiner === 'OR') {
+									const subBranches = [];
+									for (const subChild of child.children) {
+										if (subChild.type === 'rule') {
+											const b = compileRuleToBranch(subChild);
+											if (b) subBranches.push(b);
+										} else if (subChild.type === 'group') {
+											const b = compileGroupToAST(subChild);
+											if (b && Object.keys(b).length > 0) subBranches.push(b);
+										}
+									}
+									if (subBranches.length > 0) orBranches.push(...subBranches);
+								} else {
+									const b = compileGroupToAST(child);
+									if (b) {
+										if (b.or) orBranches.push(...b.or);
+										delete b.or;
+										Object.assign(root, b);
+									}
+								}
+							}
+						}
+
+						if (orBranches.length > 0) root.or = orBranches;
+						return root;
+					} else {
+						const branches = [];
+						for (const child of group.children) {
+							if (child.type === 'rule') {
+								const b = compileRuleToBranch(child);
+								if (b) branches.push(b);
+							} else if (child.type === 'group') {
+								const b = compileGroupToAST(child);
+								if (b && Object.keys(b).length > 0) branches.push(b);
+							}
+						}
+						if (branches.length === 0) return {};
+						return { or: branches };
+					}
+				}
+
+				function syncRuleTree() {
+					const ast = compileGroupToAST(ruleTreeState);
+					const jsonStr = (Object.keys(ast).length > 0) ? JSON.stringify(ast, null, 2) : '{}';
+					const rawFilter = document.getElementById('url-builder-raw-filter');
+					if (rawFilter) {
+						rawFilter.value = jsonStr;
+						const limitInput = document.getElementById('url-builder-limit');
+						if (limitInput) {
+							limitInput.dispatchEvent(new Event('change', { bubbles: true }));
+						}
+						document.body.dispatchEvent(new Event("multiselect-change"));
+					}
+				}
+
+				function astToRuleGroup(ast) {
+					if (!ast || typeof ast !== 'object') return null;
+					if (Array.isArray(ast.or) && ast.or.length > 0) {
+						const children = [];
+						for (const branch of ast.or) {
+							const grp = astToRuleGroup(branch);
+							if (grp) {
+								if (grp.children && grp.children.length === 1) {
+									children.push(grp.children[0]);
+								} else {
+									children.push(grp);
+								}
+							}
+						}
+						return {
+							id: generateNodeId('g'),
+							type: 'group',
+							combiner: 'OR',
+							children: children
+						};
+					}
+					const children = [];
+					for (const [key, val] of Object.entries(ast)) {
+						if (key === 'or') continue;
+						if (key === 'personIds' && val) {
+							const op = val.all ? 'all' : (val.none ? 'none' : 'any');
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'people', operator: op, value: val[op] || [] });
+						} else if (key === 'albumIds' && val) {
+							const op = val.all ? 'all' : (val.none ? 'none' : 'any');
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'albums', operator: op, value: val[op] || [] });
+						} else if (key === 'tagIds' && val) {
+							const op = val.all ? 'all' : (val.none ? 'none' : 'any');
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'tags', operator: op, value: val[op] || [] });
+						} else if (key === 'country' && val) {
+							const op = val.eq ? 'eq' : (val.notIn ? 'notIn' : 'in');
+							const v = val.eq ? [val.eq] : (val[op] || []);
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'country', operator: op, value: v });
+						} else if (key === 'state' && val) {
+							const op = val.notIn ? 'notIn' : 'in';
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'state', operator: op, value: val[op] || [] });
+						} else if (key === 'city' && val) {
+							const op = val.notIn ? 'notIn' : 'in';
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'city', operator: op, value: val[op] || [] });
+						} else if (key === 'model' && val) {
+							const op = val.notIn ? 'notIn' : 'in';
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'camera', operator: op, value: val[op] || [] });
+						} else if (key === 'isFavorite' && val) {
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'favorite', operator: val.eq ? 'true' : 'false', value: val.eq });
+						} else if (key === 'isMotion' && val) {
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: 'MOTION', value: 'MOTION' });
+						} else if (key === 'type' && val && val.in) {
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: val.in[0], value: val.in[0] });
+						} else if (key === 'rating' && val && val.gte) {
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'rating', operator: String(val.gte), value: val.gte });
+						} else if (key === 'hasPeople' && val) {
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_people', operator: val.eq ? 'true' : 'false', value: val.eq });
+						} else if (key === 'hasAlbums' && val) {
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_albums', operator: val.eq ? 'true' : 'false', value: val.eq });
+						} else if (key === 'hasTags' && val) {
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_tags', operator: val.eq ? 'true' : 'false', value: val.eq });
+						} else if (key === 'takenAt' && val) {
+							const op = (val.gte && val.lte) ? 'between' : (val.lte ? 'before' : 'after');
+							children.push({ id: generateNodeId('r'), type: 'rule', field: 'date', operator: op, dateAfter: val.gte || '', dateBefore: val.lte || '' });
+						}
+					}
+					return {
+						id: generateNodeId('g'),
+						type: 'group',
+						combiner: 'AND',
+						children: children
+					};
+				}
+
+				function initRuleTreeFromInitialFilter() {
+					loadImmichMetadata();
+					const rawInput = document.getElementById('url-builder-raw-filter');
+					const initialRaw = rawInput ? (rawInput.value || '').trim() : '';
+					if (initialRaw && initialRaw !== '{}') {
+						try {
+							const parsed = JSON.parse(initialRaw);
+							const converted = astToRuleGroup(parsed);
+							if (converted && converted.children && converted.children.length > 0) {
+								ruleTreeState = converted;
+								return;
+							}
+						} catch (e) {
+							console.warn('Could not parse initial filter into rule tree:', e);
+						}
+					}
+					ruleTreeState = {
+						id: 'root',
+						type: 'group',
+						combiner: 'AND',
+						children: [
+							{ id: generateNodeId('r'), type: 'rule', field: 'albums', operator: 'any', value: [] }
+						]
+					};
+				}
+
+				document.addEventListener('click', function(e) {
+					if (!e.target.closest('.rt-value-box')) {
+						document.querySelectorAll('.rt-dropdown-menu.open').forEach(el => el.classList.remove('open'));
+					}
+				});
+
 				document.addEventListener('DOMContentLoaded', function() {
 					const userSelect = document.getElementById('url-builder-user');
 					if (userSelect) {
@@ -648,6 +1641,10 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 							window.location.href = url.toString();
 						});
 					}
+
+					initRuleTreeFromInitialFilter();
+					renderRuleTree();
+					syncRuleTree();
 				});
 			</script>
 		</head>
@@ -681,6 +1678,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 				<div class="playground-grid">
 					<!-- Left Column: Filter Criteria Form -->
 					<div class="playground-form-column">
+						<textarea id="immich-filter-metadata" style="display: none;">{ filterMetadataJSON(d) }</textarea>
 						<form
 							id="url-builder-form"
 							hx-post="/url-builder/filters/search"
@@ -694,6 +1692,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 							}
 						>
 							<input type="hidden" id="url-builder-limit" name="limit" value="24"/>
+							<input type="hidden" id="url-builder-raw-filter" name="raw_filter" value={ d.InitialFilter }/>
 							if d.ViewData.Config.Kiosk.Password != "" {
 								<input type="hidden" name="password" value={ d.ViewData.Config.Kiosk.Password }/>
 							}
@@ -715,129 +1714,16 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 								</div>
 							}
 
-							// Core Criteria
-							<div class="playground-card">
-								<div class="playground-card-title">⭐ Core Criteria</div>
-								<div class="playground-field-group">
-									@URLBuilderRadioCustomLabel("Favourites", "favorite", "Filter by favourite status. 'Any' includes both favourite and non-favourite assets.", "any", "Favourites only", "true", "Non-favourites only", "false")
-									@URLBuilderRadioCustomLabel("Media type", "type", "Filter by asset media type. 'Default' uses your Kiosk configuration (photos, and videos if enabled).", "default (kiosk config)", "Photos only", "IMAGE", "Videos only", "VIDEO", "Motion photos", "MOTION")
-									@URLBuilderSelect("Minimum star rating", "rating", "Assets must have at least this star rating.", "Any rating", "0", "1+ Stars", "1", "2+ Stars", "2", "3+ Stars", "3", "4+ Stars", "4", "5 Stars only", "5")
+							<!-- Visual Rule Tree (Sole Filter Builder) -->
+							<div class="playground-card rt-tree-card">
+								<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+									<div class="playground-card-title" style="margin-bottom: 0;">🌲 Visual Rule Tree</div>
+									<button type="button" class="rt-btn rt-btn-outline" onclick="rtClearAll()" title="Reset tree to empty">
+										🗑️ Reset
+									</button>
 								</div>
-							</div>
 
-							// People
-							<div class="playground-card">
-								<div class="playground-card-title">👥 People</div>
-								<div class="playground-field-group">
-									@URLBuilderMultiSelect("People", "people", "Assets must contain any of the selected people.") {
-										for _, p := range d.People {
-											<option value={ p.ID }>{ p.Name }</option>
-										}
-									}
-									@URLBuilderRadioCustomLabel("People presence", "has_people", "Whether the asset must have recognized people. 'Any' includes assets with or without people.", "any", "Must have people", "true", "No people", "false")
-								</div>
-							</div>
-
-							// Albums & Tags
-							<div class="playground-card">
-								<div class="playground-card-title">📁 Albums & 🏷️ Tags</div>
-								<div class="playground-field-group">
-									@URLBuilderMultiSelect("Albums", "albums", "Assets must belong to any of the selected albums.") {
-										for _, a := range d.Albums {
-											<option value={ a.ID }>{ a.AlbumName }</option>
-										}
-									}
-									@URLBuilderRadioCustomLabel("Album presence", "has_albums", "Whether the asset must be added to an album. 'Any' includes assets in or out of albums.", "any", "Must be in an album", "true", "Not in any album", "false")
-
-									@URLBuilderMultiSelect("Tags", "tags", "Assets must have any of the selected tags.") {
-										for _, t := range d.Tags {
-											if strings.EqualFold(t.Name, kiosk.TagSkip) || strings.EqualFold(t.Value, kiosk.TagSkip) {
-												{{ continue }}
-											}
-											<option value={ t.ID }>{ t.Name }</option>
-										}
-									}
-									@URLBuilderRadioCustomLabel("Tag presence", "has_tags", "Whether the asset must have tags. 'Any' includes assets with or without tags.", "any", "Must have tags", "true", "No tags", "false")
-								</div>
-							</div>
-
-							// Location & Gear
-							<div class="playground-card">
-								<div class="playground-card-title">🌍 Location & 📷 Gear</div>
-								<div class="playground-field-group">
-									if len(d.Countries) > 0 {
-										@URLBuilderMultiSelect("Country", "country", "Filter by country.") {
-											for _, c := range d.Countries {
-												<option value={ c }>{ c }</option>
-											}
-										}
-									} else {
-										@URLBuilderText("Country", "country", "Filter by country name (e.g. Germany, Brazil, Croatia).", "")
-									}
-
-									if len(d.States) > 0 {
-										@URLBuilderMultiSelect("State / Region", "state", "Filter by state or province name.") {
-											for _, s := range d.States {
-												<option value={ s }>{ s }</option>
-											}
-										}
-									} else {
-										@URLBuilderText("State / Region", "state", "Filter by state or province name.", "")
-									}
-
-									if len(d.Cities) > 0 {
-										@URLBuilderMultiSelect("City", "city", "Filter by city or town name.") {
-											for _, c := range d.Cities {
-												<option value={ c }>{ c }</option>
-											}
-										}
-									} else {
-										@URLBuilderText("City", "city", "Filter by city or town name.", "")
-									}
-
-									if len(d.Cameras) > 0 {
-										@URLBuilderMultiSelect("Camera model", "camera", "Filter by camera model.") {
-											for _, m := range d.Cameras {
-												<option value={ m }>{ m }</option>
-											}
-										}
-									} else {
-										@URLBuilderText("Camera model", "camera", "Filter by camera model (e.g. iPhone, Pixel, Sony).", "")
-									}
-								</div>
-							</div>
-
-							// Dates
-							<div class="playground-card">
-								<div class="playground-card-title">📅 Date Taken</div>
-								<div class="form-row-2">
-									<div class="form-group">
-										<label for="url-builder-taken_after">Taken after</label>
-										@URLBuilderHelpText("Earliest asset date (YYYY-MM-DD)")
-										<input type="date" id="url-builder-taken_after" name="taken_after"/>
-									</div>
-									<div class="form-group">
-										<label for="url-builder-taken_before">Taken before</label>
-										@URLBuilderHelpText("Latest asset date (YYYY-MM-DD)")
-										<input type="date" id="url-builder-taken_before" name="taken_before"/>
-									</div>
-								</div>
-							</div>
-
-							// Advanced Raw JSON Override
-							<div class="playground-card">
-								<div class="playground-card-title">⚙️ Advanced JSON Override</div>
-								<div class="form-group">
-									<label for="url-builder-raw-filter">Custom Search API v2 JSON</label>
-									@URLBuilderHelpText("Optional: Write or paste custom Immich Search API v2 JSON (e.g. nested boolean OR branches). When populated, this overrides visual fields above.")
-									<textarea
-										id="url-builder-raw-filter"
-										name="raw_filter"
-										rows="5"
-										placeholder={ "{\n  \"isFavorite\": true\n}" }
-										style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem;"
-									>{ d.InitialFilter }</textarea>
-								</div>
+								<div id="rule-tree-mount"></div>
 							</div>
 						</form>
 					</div>
@@ -854,4 +1740,56 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 			</div>
 		</body>
 	}
+}
+
+func filterMetadataJSON(d common.FilterBuilderViewData) string {
+	type item struct {
+		ID    string `json:"id"`
+		Label string `json:"label"`
+	}
+	people := make([]item, 0, len(d.People))
+	for _, p := range d.People {
+		people = append(people, item{ID: p.ID, Label: p.Name})
+	}
+	albums := make([]item, 0, len(d.Albums))
+	for _, a := range d.Albums {
+		albums = append(albums, item{ID: a.ID, Label: a.AlbumName})
+	}
+	tags := make([]item, 0, len(d.Tags))
+	for _, t := range d.Tags {
+		if strings.EqualFold(t.Name, kiosk.TagSkip) || strings.EqualFold(t.Value, kiosk.TagSkip) {
+			continue
+		}
+		tags = append(tags, item{ID: t.ID, Label: t.Name})
+	}
+	countries := d.Countries
+	if countries == nil {
+		countries = []string{}
+	}
+	states := d.States
+	if states == nil {
+		states = []string{}
+	}
+	cities := d.Cities
+	if cities == nil {
+		cities = []string{}
+	}
+	cameras := d.Cameras
+	if cameras == nil {
+		cameras = []string{}
+	}
+	m := map[string]any{
+		"people":    people,
+		"albums":    albums,
+		"tags":      tags,
+		"countries": countries,
+		"states":    states,
+		"cities":    cities,
+		"cameras":   cameras,
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
 }
