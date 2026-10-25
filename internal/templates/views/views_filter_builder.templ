@@ -276,6 +276,59 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					margin-bottom: 0.75rem;
 				}
 
+				.playground-tab-toolbar {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					flex-wrap: wrap;
+					gap: 0.6rem;
+					margin-bottom: 0.65rem;
+				}
+
+				.playground-validation-indicator {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.35rem;
+					font-size: 0.78rem;
+					font-weight: 600;
+				}
+
+				.status-badge {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.35rem;
+					padding: 0.25rem 0.6rem;
+					border-radius: 9999px;
+					font-size: 0.75rem;
+					font-weight: 700;
+					line-height: 1.2;
+					transition: all 0.2s ease;
+				}
+
+				.status-badge.status-valid {
+					background: #dcfce7;
+					color: #15803d;
+					border: 1px solid #bbf7d0;
+				}
+
+				.status-badge.status-error {
+					background: #fee2e2;
+					color: #b91c1c;
+					border: 1px solid #fecaca;
+				}
+
+				.status-badge.status-info {
+					background: #f1f5f9;
+					color: #475569;
+					border: 1px solid #e2e8f0;
+				}
+
+				.status-badge.status-dirty {
+					background: #fef3c7;
+					color: #92400e;
+					border: 1px solid #fde68a;
+				}
+
 				.btn-tab-action {
 					display: inline-flex;
 					align-items: center;
@@ -306,6 +359,44 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					border-color: #86efac;
 				}
 
+				.btn-apply-tree {
+					background: #0f172a;
+					color: #ffffff;
+					border: 1px solid #0f172a;
+					font-weight: 700;
+				}
+
+				.btn-apply-tree:hover:not(:disabled) {
+					background: #1e293b;
+					border-color: #334155;
+					transform: translateY(-1px);
+					box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+				}
+
+				.btn-apply-tree:disabled {
+					opacity: 0.45;
+					cursor: not-allowed;
+					background: #94a3b8;
+					border-color: #94a3b8;
+				}
+
+				.btn-apply-tree.applied {
+					background: #166534;
+					border-color: #166534;
+					color: #ffffff;
+				}
+
+				.btn-format {
+					background: #f8fafc;
+					color: #334155;
+					border: 1px solid #cbd5e1;
+				}
+
+				.btn-format:hover {
+					background: #f1f5f9;
+					color: #0f172a;
+				}
+
 				.btn-launch {
 					background: #0284c7;
 					color: #ffffff;
@@ -325,6 +416,68 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 				.btn-configure:hover {
 					background: #f1f5f9;
 					color: #0f172a;
+				}
+
+				.code-editor-box {
+					position: relative;
+					border-radius: 0.5rem;
+					border: 1px solid #cbd5e1;
+					overflow: hidden;
+					background: #0f172a;
+					transition: border-color 0.15s ease, box-shadow 0.15s ease;
+				}
+
+				.code-editor-box:focus-within {
+					border-color: #0284c7;
+					box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+				}
+
+				.code-editor-box.has-error {
+					border-color: #ef4444;
+				}
+
+				.code-editor-box.has-error:focus-within {
+					border-color: #ef4444;
+					box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+				}
+
+				.code-editor-box textarea.code-editor-textarea,
+				.code-editor-box textarea.code-editor-textarea:focus {
+					width: 100%;
+					box-sizing: border-box;
+					display: block;
+					background: #0f172a;
+					color: #f1f5f9;
+					border-radius: 0;
+					font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+					font-size: 0.82rem;
+					line-height: 1.5;
+					padding: 0.85rem;
+					border: none;
+					outline: none;
+					resize: vertical;
+					tab-size: 2;
+					white-space: pre;
+					overflow-x: auto;
+				}
+
+				.code-editor-hint {
+					margin-top: 0.5rem;
+					font-size: 0.76rem;
+					color: #64748b;
+					line-height: 1.4;
+				}
+
+				.code-editor-hint kbd {
+					display: inline-block;
+					padding: 0.1rem 0.35rem;
+					font-size: 0.7rem;
+					font-family: ui-monospace, SFMono-Regular, monospace;
+					color: #334155;
+					background-color: #f1f5f9;
+					border: 1px solid #cbd5e1;
+					border-radius: 0.25rem;
+					box-shadow: 0 1px 0 rgba(0,0,0,0.1);
 				}
 
 				.code-preview-box {
@@ -877,7 +1030,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 				}
 			</style>
 			<script>
-				window.activePlaygroundTab = 'tab-json';
+				window.activePlaygroundTab = 'tab-tree';
 
 				function switchPlaygroundTab(tabId) {
 					window.activePlaygroundTab = tabId;
@@ -892,7 +1045,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 				function copyPlaygroundSnippet(btn, elementId) {
 					const el = document.getElementById(elementId);
 					if (!el) return;
-					const text = el.innerText || el.textContent;
+					const text = (el.value !== undefined) ? el.value : (el.innerText || el.textContent);
 					if (navigator.clipboard) {
 						navigator.clipboard.writeText(text).then(() => {
 							const orig = btn.innerHTML;
@@ -1555,7 +1708,390 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					}
 				}
 
-				function syncRuleTree() {
+				function parseAndValidateJSON(text) {
+					text = (text || '').trim();
+					if (!text || text === '{}') {
+						return { valid: true, ast: {}, message: 'Empty filter (matches all assets)' };
+					}
+					try {
+						const parsed = JSON.parse(text);
+						if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+							return { valid: false, error: 'JSON must be a JSON Object ({...}), not an array or primitive.' };
+						}
+						const keyCount = Object.keys(parsed).length;
+						return { valid: true, ast: parsed, message: 'Valid JSON (' + keyCount + ' filter ' + (keyCount === 1 ? 'key' : 'keys') + ')' };
+					} catch (e) {
+						return { valid: false, error: 'JSON Syntax Error: ' + e.message };
+					}
+				}
+
+				function parseAndValidateURL(text) {
+					text = (text || '').trim();
+					if (!text) {
+						return { valid: false, error: 'URL is empty.' };
+					}
+
+					let urlObj;
+					try {
+						if (text.startsWith('http://') || text.startsWith('https://')) {
+							urlObj = new URL(text);
+						} else if (text.startsWith('/')) {
+							urlObj = new URL(text, window.location.origin);
+						} else if (text.startsWith('?')) {
+							urlObj = new URL('/' + text, window.location.origin);
+						} else {
+							urlObj = new URL('http://dummy.local/' + text);
+						}
+					} catch (e) {
+						return { valid: false, error: 'Malformed URL: ' + e.message };
+					}
+
+					const filterParam = urlObj.searchParams.get('filter');
+					const userParam = urlObj.searchParams.get('user');
+
+					if (!filterParam || filterParam.trim() === '' || filterParam.trim() === '{}') {
+						return {
+							valid: true,
+							ast: {},
+							user: userParam,
+							message: 'Valid URL (Empty filter)'
+						};
+					}
+
+					try {
+						const parsed = JSON.parse(filterParam);
+						if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+							return { valid: false, error: 'The ?filter parameter must be a JSON object.' };
+						}
+						const keyCount = Object.keys(parsed).length;
+						return {
+							valid: true,
+							ast: parsed,
+							user: userParam,
+							message: 'Valid URL (' + keyCount + ' filter ' + (keyCount === 1 ? 'key' : 'keys') + (userParam ? ', user: @' + userParam : '') + ')'
+						};
+					} catch (e) {
+						return { valid: false, error: 'Invalid JSON in ?filter: ' + e.message };
+					}
+				}
+
+				function parseAndValidateYAML(text) {
+					text = (text || '').trim();
+					if (!text) {
+						return { valid: false, error: 'YAML is empty.' };
+					}
+
+					const urlMatch = text.match(/url:\s*["']?([^"'\r\n]+)["']?/i);
+					if (!urlMatch) {
+						const filterMatch = text.match(/filter:\s*["']?([^"'\r\n]+)["']?/i);
+						if (filterMatch) {
+							const res = parseAndValidateJSON(filterMatch[1].trim());
+							if (res.valid) {
+								return { valid: true, ast: res.ast, message: 'Extracted filter from filter: key in YAML' };
+							}
+						}
+						return { valid: false, error: 'Could not find a `url:` containing `?filter=...` in YAML.' };
+					}
+
+					const rawURL = urlMatch[1].trim();
+					const urlRes = parseAndValidateURL(rawURL);
+					if (!urlRes.valid) {
+						return { valid: false, error: 'YAML `url` error: ' + urlRes.error };
+					}
+					return {
+						valid: true,
+						ast: urlRes.ast,
+						user: urlRes.user,
+						message: 'Valid YAML (' + urlRes.message + ')'
+					};
+				}
+
+				function setValidationStatus(type, status, message, isDirty) {
+					const statusEl = document.getElementById(type + '-val-status');
+					const applyBtn = document.getElementById('btn-apply-' + type);
+					const editorBox = document.getElementById(type + '-editor-box');
+
+					if (!statusEl) return;
+
+					let badgeClass = 'status-info';
+					let icon = 'ℹ️';
+
+					if (status === true || status === 'valid') {
+						badgeClass = isDirty ? 'status-dirty' : 'status-valid';
+						icon = isDirty ? '✏️' : '✓';
+					} else if (status === false || status === 'error') {
+						badgeClass = 'status-error';
+						icon = '⚠️';
+					}
+
+					statusEl.innerHTML = '<span class="status-badge ' + badgeClass + '">' + icon + ' ' + escapeHtml(message) + '</span>';
+
+					if (applyBtn) {
+						applyBtn.disabled = (status === false || status === 'error');
+					}
+					if (editorBox) {
+						editorBox.classList.toggle('has-error', status === false || status === 'error');
+					}
+				}
+
+				function handleJSONInput() {
+					const el = document.getElementById('filter-json-editor');
+					if (!el) return;
+					const res = parseAndValidateJSON(el.value);
+					if (res.valid) {
+						setValidationStatus('json', true, res.message + ' - click "Apply to Tree"', true);
+					} else {
+						setValidationStatus('json', false, res.error, true);
+					}
+				}
+
+				function handleURLInput() {
+					const el = document.getElementById('kiosk-url-editor');
+					if (!el) return;
+					const res = parseAndValidateURL(el.value);
+					if (res.valid) {
+						setValidationStatus('url', true, res.message + ' - click "Apply to Tree"', true);
+					} else {
+						setValidationStatus('url', false, res.error, true);
+					}
+				}
+
+				function handleYAMLInput() {
+					const el = document.getElementById('redirect-yaml-editor');
+					if (!el) return;
+					const res = parseAndValidateYAML(el.value);
+					if (res.valid) {
+						setValidationStatus('yaml', true, res.message + ' - click "Apply to Tree"', true);
+					} else {
+						setValidationStatus('yaml', false, res.error, true);
+					}
+				}
+
+				function formatJSONEditor() {
+					const el = document.getElementById('filter-json-editor');
+					if (!el) return;
+					const val = (el.value || '').trim();
+					if (!val) return;
+					try {
+						const parsed = JSON.parse(val);
+						el.value = JSON.stringify(parsed, null, 2);
+						handleJSONInput();
+					} catch (e) {
+						setValidationStatus('json', false, 'Cannot format invalid JSON: ' + e.message, true);
+					}
+				}
+
+				function handleEditorKeyDown(event, applyFunc) {
+					if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+						event.preventDefault();
+						applyFunc();
+					}
+				}
+
+				function triggerApplySuccess(type) {
+					const applyBtn = document.getElementById('btn-apply-' + type);
+					if (applyBtn) {
+						const orig = applyBtn.innerHTML;
+						applyBtn.innerHTML = '<span>✓ Applied!</span>';
+						applyBtn.classList.add('applied');
+						setTimeout(() => {
+							applyBtn.innerHTML = orig;
+							applyBtn.classList.remove('applied');
+						}, 1800);
+					}
+				}
+
+				function applyJSONToTree() {
+					const el = document.getElementById('filter-json-editor');
+					if (!el) return;
+					const res = parseAndValidateJSON(el.value);
+					if (!res.valid) {
+						setValidationStatus('json', false, res.error, true);
+						return;
+					}
+
+					const converted = astToRuleGroup(res.ast);
+					ruleTreeState = (converted && converted.children) ? converted : {
+						id: 'root',
+						type: 'group',
+						combiner: 'AND',
+						children: []
+					};
+
+					renderRuleTree();
+					syncRuleTree({ skipSource: 'json' });
+					triggerApplySuccess('json');
+					setValidationStatus('json', true, '✓ In sync with Visual Rule Tree', false);
+				}
+
+				function applyURLToTree() {
+					const el = document.getElementById('kiosk-url-editor');
+					if (!el) return;
+					const res = parseAndValidateURL(el.value);
+					if (!res.valid) {
+						setValidationStatus('url', false, res.error, true);
+						return;
+					}
+
+					if (res.user) {
+						const userSelect = document.getElementById('url-builder-user');
+						if (userSelect) {
+							const hasOption = Array.from(userSelect.options).some(o => o.value === res.user);
+							if (hasOption) {
+								userSelect.value = res.user;
+							}
+						}
+					}
+
+					const converted = astToRuleGroup(res.ast);
+					ruleTreeState = (converted && converted.children) ? converted : {
+						id: 'root',
+						type: 'group',
+						combiner: 'AND',
+						children: []
+					};
+
+					renderRuleTree();
+					syncRuleTree({ skipSource: 'url' });
+					triggerApplySuccess('url');
+					setValidationStatus('url', true, '✓ In sync with Visual Rule Tree', false);
+				}
+
+				function applyYAMLToTree() {
+					const el = document.getElementById('redirect-yaml-editor');
+					if (!el) return;
+					const res = parseAndValidateYAML(el.value);
+					if (!res.valid) {
+						setValidationStatus('yaml', false, res.error, true);
+						return;
+					}
+
+					if (res.user) {
+						const userSelect = document.getElementById('url-builder-user');
+						if (userSelect) {
+							const hasOption = Array.from(userSelect.options).some(o => o.value === res.user);
+							if (hasOption) {
+								userSelect.value = res.user;
+							}
+						}
+					}
+
+					const converted = astToRuleGroup(res.ast);
+					ruleTreeState = (converted && converted.children) ? converted : {
+						id: 'root',
+						type: 'group',
+						combiner: 'AND',
+						children: []
+					};
+
+					renderRuleTree();
+					syncRuleTree({ skipSource: 'yaml' });
+					triggerApplySuccess('yaml');
+					setValidationStatus('yaml', true, '✓ In sync with Visual Rule Tree', false);
+				}
+
+				function generateKioskURL(ast) {
+					const origin = window.location.origin;
+					const jsonStr = (ast && Object.keys(ast).length > 0) ? JSON.stringify(ast) : '';
+					const userEl = document.getElementById('url-builder-user');
+					const user = userEl ? userEl.value : '';
+					const passEl = document.querySelector('input[name="password"]');
+					const password = passEl ? passEl.value : '';
+
+					const params = new URLSearchParams();
+					if (jsonStr && jsonStr !== '{}') {
+						params.set('filter', jsonStr);
+					}
+					if (user && user !== 'all') {
+						params.set('user', user);
+					}
+					if (password) {
+						params.set('password', password);
+					}
+					const qs = params.toString();
+					return qs ? (origin + '/?' + qs) : (origin + '/');
+				}
+
+				function generateRedirectYAML(ast) {
+					const jsonStr = (ast && Object.keys(ast).length > 0) ? JSON.stringify(ast) : '';
+					const userEl = document.getElementById('url-builder-user');
+					const user = userEl ? userEl.value : '';
+					const passEl = document.querySelector('input[name="password"]');
+					const password = passEl ? passEl.value : '';
+
+					const params = new URLSearchParams();
+					if (jsonStr && jsonStr !== '{}') {
+						params.set('filter', jsonStr);
+					}
+					if (user && user !== 'all') {
+						params.set('user', user);
+					}
+					if (password) {
+						params.set('password', password);
+					}
+					const qs = params.toString();
+					const targetUrl = qs ? ('/?' + qs) : '/';
+					return 'redirects:\n  - name: "Custom Filtered Slideshow"\n    url: "' + targetUrl + '"';
+				}
+
+				function generateURLBuilderLink(ast) {
+					const jsonStr = (ast && Object.keys(ast).length > 0) ? JSON.stringify(ast) : '';
+					const passEl = document.querySelector('input[name="password"]');
+					const password = passEl ? passEl.value : '';
+					const params = new URLSearchParams();
+					if (jsonStr && jsonStr !== '{}') {
+						params.set('filter', jsonStr);
+					}
+					if (password) {
+						params.set('password', password);
+					}
+					const qs = params.toString();
+					return qs ? ('/url-builder/extended?' + qs) : '/url-builder/extended';
+				}
+
+				function updateEditorsFromAST(ast, opts) {
+					opts = opts || {};
+					const jsonStr = (ast && Object.keys(ast).length > 0) ? JSON.stringify(ast, null, 2) : '{}';
+					const kioskUrl = generateKioskURL(ast);
+					const redirectYaml = generateRedirectYAML(ast);
+					const builderUrl = generateURLBuilderLink(ast);
+
+					const jsonEditor = document.getElementById('filter-json-editor');
+					if (jsonEditor && opts.skipSource !== 'json') {
+						if (document.activeElement !== jsonEditor) {
+							jsonEditor.value = jsonStr;
+							setValidationStatus('json', true, '✓ In sync with Visual Rule Tree', false);
+						}
+					}
+
+					const urlEditor = document.getElementById('kiosk-url-editor');
+					if (urlEditor && opts.skipSource !== 'url') {
+						if (document.activeElement !== urlEditor) {
+							urlEditor.value = kioskUrl;
+							setValidationStatus('url', true, '✓ In sync with Visual Rule Tree', false);
+						}
+					}
+
+					const yamlEditor = document.getElementById('redirect-yaml-editor');
+					if (yamlEditor && opts.skipSource !== 'yaml') {
+						if (document.activeElement !== yamlEditor) {
+							yamlEditor.value = redirectYaml;
+							setValidationStatus('yaml', true, '✓ In sync with Visual Rule Tree', false);
+						}
+					}
+
+					const launchLink = document.getElementById('kiosk-url-launch');
+					if (launchLink) {
+						launchLink.href = kioskUrl;
+					}
+					const configLink = document.getElementById('kiosk-url-configure');
+					if (configLink) {
+						configLink.href = builderUrl;
+					}
+				}
+
+				function syncRuleTree(opts) {
+					opts = opts || {};
 					const ast = compileGroupToAST(ruleTreeState);
 					const jsonStr = (Object.keys(ast).length > 0) ? JSON.stringify(ast, null, 2) : '{}';
 					const rawFilter = document.getElementById('url-builder-raw-filter');
@@ -1567,6 +2103,7 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 						}
 						document.body.dispatchEvent(new Event("multiselect-change"));
 					}
+					updateEditorsFromAST(ast, opts);
 				}
 
 				function parseFieldToRules(key, val, children) {
@@ -1584,22 +2121,27 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 						const v = val.eq ? [val.eq] : (val[op] || []);
 						children.push({ id: generateNodeId('r'), type: 'rule', field: 'country', operator: op, value: v });
 					} else if (key === 'state' && val) {
-						const op = val.notIn ? 'notIn' : 'in';
-						children.push({ id: generateNodeId('r'), type: 'rule', field: 'state', operator: op, value: val[op] || [] });
+						const op = val.eq ? 'in' : (val.notIn ? 'notIn' : 'in');
+						const v = val.eq ? [val.eq] : (val[op] || []);
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'state', operator: op, value: v });
 					} else if (key === 'city' && val) {
-						const op = val.notIn ? 'notIn' : 'in';
-						children.push({ id: generateNodeId('r'), type: 'rule', field: 'city', operator: op, value: val[op] || [] });
+						const op = val.eq ? 'in' : (val.notIn ? 'notIn' : 'in');
+						const v = val.eq ? [val.eq] : (val[op] || []);
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'city', operator: op, value: v });
 					} else if (key === 'model' && val) {
-						const op = val.notIn ? 'notIn' : 'in';
-						children.push({ id: generateNodeId('r'), type: 'rule', field: 'camera', operator: op, value: val[op] || [] });
+						const op = val.eq ? 'in' : (val.notIn ? 'notIn' : 'in');
+						const v = val.eq ? [val.eq] : (val[op] || []);
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'camera', operator: op, value: v });
 					} else if (key === 'isFavorite' && val) {
-						children.push({ id: generateNodeId('r'), type: 'rule', field: 'favorite', operator: val.eq ? 'true' : 'false', value: val.eq });
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'favorite', operator: (val.eq !== undefined ? (val.eq ? 'true' : 'false') : 'true'), value: !!val.eq });
 					} else if (key === 'isMotion' && val) {
 						children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: 'MOTION', value: 'MOTION' });
-					} else if (key === 'type' && val && val.in) {
-						children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: val.in[0], value: val.in[0] });
-					} else if (key === 'rating' && val && val.gte) {
-						children.push({ id: generateNodeId('r'), type: 'rule', field: 'rating', operator: String(val.gte), value: val.gte });
+					} else if (key === 'type' && val) {
+						const t = val.in ? val.in[0] : (val.eq || 'IMAGE');
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: t, value: t });
+					} else if (key === 'rating' && val) {
+						const r = val.gte || val.eq || 1;
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'rating', operator: String(r), value: r });
 					} else if (key === 'hasPeople' && val) {
 						children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_people', operator: val.eq ? 'true' : 'false', value: val.eq });
 					} else if (key === 'hasAlbums' && val) {
@@ -1793,21 +2335,181 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 								</div>
 							}
 
-							<!-- Visual Rule Tree (Sole Filter Builder) -->
-							<div class="playground-card rt-tree-card">
-								<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-									<div class="playground-card-title" style="margin-bottom: 0;">🌲 Visual Rule Tree</div>
-									<button type="button" class="rt-btn rt-btn-outline" onclick="rtClearAll()" title="Reset tree to empty">
-										🗑️ Reset
+							<!-- Filter Editor: 4 interchangeable, editable views of the same filter -->
+							<div class="playground-card playground-tabs-card" style="padding: 0;">
+								<div class="playground-tabs-header">
+									<button type="button" class="playground-tab-btn active" data-tab="tab-tree" onclick="switchPlaygroundTab('tab-tree')">
+										🌲 Rule Tree
+									</button>
+									<button type="button" class="playground-tab-btn" data-tab="tab-json" onclick="switchPlaygroundTab('tab-json')">
+										⚡ JSON
+									</button>
+									<button type="button" class="playground-tab-btn" data-tab="tab-url" onclick="switchPlaygroundTab('tab-url')">
+										🔗 URL
+									</button>
+									<button type="button" class="playground-tab-btn" data-tab="tab-yaml" onclick="switchPlaygroundTab('tab-yaml')">
+										⚙️ YAML
 									</button>
 								</div>
 
-								<div id="rule-tree-mount"></div>
+							<!-- Tab 0: Visual Rule Tree -->
+							<div id="tab-tree" class="playground-tab-pane active">
+								<div class="rt-tree-card">
+									<div style="display: flex; align-items: center; justify-content: flex-end;">
+										<button type="button" class="rt-btn rt-btn-outline" onclick="rtClearAll()" title="Reset tree to empty">
+											🗑️ Reset
+										</button>
+									</div>
+									<div id="rule-tree-mount"></div>
+								</div>
 							</div>
+
+							<!-- Tab 1: Filter JSON Editor -->
+							<div id="tab-json" class="playground-tab-pane">
+								<div class="playground-tab-toolbar">
+									<div class="playground-validation-indicator" id="json-val-status">
+										<span class="status-badge status-valid">✓ Valid JSON</span>
+									</div>
+									<div class="playground-tab-actions">
+										<button type="button" class="btn-tab-action btn-format" onclick="formatJSONEditor()" title="Prettify JSON">
+											<span>Format</span>
+										</button>
+										<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'filter-json-editor')">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+												<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+											</svg>
+											<span>Copy JSON</span>
+										</button>
+										<button type="button" class="btn-tab-action btn-apply-tree" id="btn-apply-json" onclick="applyJSONToTree()" title="Configure Visual Rule Tree to match this JSON (Ctrl+Enter)">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<polyline points="9 11 12 14 22 4"></polyline>
+												<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+											</svg>
+											<span>Apply to Tree</span>
+										</button>
+									</div>
+								</div>
+								<div class="code-editor-box" id="json-editor-box">
+									<textarea
+										id="filter-json-editor"
+										class="code-editor-textarea"
+										spellcheck="false"
+										autocomplete="off"
+										rows="10"
+										placeholder="Paste or write Filter JSON here..."
+										oninput="handleJSONInput()"
+										onchange="event.stopPropagation()"
+										onkeydown="handleEditorKeyDown(event, applyJSONToTree)"
+									></textarea>
+								</div>
+								<div class="code-editor-hint">
+									💡 Tip: Paste any Search API v2 JSON filter and click <strong>Apply to Tree</strong> (or press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).
+								</div>
+							</div>
+
+							<!-- Tab 2: Slideshow URL Editor -->
+							<div id="tab-url" class="playground-tab-pane">
+								<div class="playground-tab-toolbar">
+									<div class="playground-validation-indicator" id="url-val-status">
+										<span class="status-badge status-valid">✓ Valid URL</span>
+									</div>
+									<div class="playground-tab-actions">
+										<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'kiosk-url-editor')">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+												<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+											</svg>
+											<span>Copy URL</span>
+										</button>
+										<a href="#" id="kiosk-url-launch" target="_blank" class="btn-tab-action btn-launch" title="Open slideshow in new tab">
+											<span>Launch Slideshow</span>
+											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+												<polyline points="15 3 21 3 21 9"></polyline>
+												<line x1="10" y1="14" x2="21" y2="3"></line>
+											</svg>
+										</a>
+										<a href="#" id="kiosk-url-configure" target="_blank" class="btn-tab-action btn-configure" title="Configure duration, weather, transitions in URL Builder">
+											<span>Customize in URL Builder</span>
+											<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+												<polyline points="15 3 21 3 21 9"></polyline>
+												<line x1="10" y1="14" x2="21" y2="3"></line>
+											</svg>
+										</a>
+										<button type="button" class="btn-tab-action btn-apply-tree" id="btn-apply-url" onclick="applyURLToTree()" title="Configure Visual Rule Tree to match this URL (Ctrl+Enter)">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<polyline points="9 11 12 14 22 4"></polyline>
+												<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+											</svg>
+											<span>Apply to Tree</span>
+										</button>
+									</div>
+								</div>
+								<div class="code-editor-box" id="url-editor-box">
+									<textarea
+										id="kiosk-url-editor"
+										class="code-editor-textarea"
+										spellcheck="false"
+										autocomplete="off"
+										rows="3"
+										placeholder="Paste slideshow URL here..."
+										oninput="handleURLInput()"
+										onchange="event.stopPropagation()"
+										onkeydown="handleEditorKeyDown(event, applyURLToTree)"
+									></textarea>
+								</div>
+								<div class="code-editor-hint">
+									💡 Tip: Paste any Kiosk slideshow URL with a <code>?filter=</code> parameter and click <strong>Apply to Tree</strong>.
+								</div>
+							</div>
+
+							<!-- Tab 3: config.yaml Editor -->
+							<div id="tab-yaml" class="playground-tab-pane">
+								<div class="playground-tab-toolbar">
+									<div class="playground-validation-indicator" id="yaml-val-status">
+										<span class="status-badge status-valid">✓ Valid YAML</span>
+									</div>
+									<div class="playground-tab-actions">
+										<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'redirect-yaml-editor')">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+												<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+											</svg>
+											<span>Copy YAML</span>
+										</button>
+										<button type="button" class="btn-tab-action btn-apply-tree" id="btn-apply-yaml" onclick="applyYAMLToTree()" title="Configure Visual Rule Tree to match this YAML (Ctrl+Enter)">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<polyline points="9 11 12 14 22 4"></polyline>
+												<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+											</svg>
+											<span>Apply to Tree</span>
+										</button>
+									</div>
+								</div>
+								<div class="code-editor-box" id="yaml-editor-box">
+									<textarea
+										id="redirect-yaml-editor"
+										class="code-editor-textarea"
+										spellcheck="false"
+										autocomplete="off"
+										rows="5"
+										placeholder="Paste config.yaml redirect block here..."
+										oninput="handleYAMLInput()"
+										onchange="event.stopPropagation()"
+										onkeydown="handleEditorKeyDown(event, applyYAMLToTree)"
+									></textarea>
+								</div>
+								<div class="code-editor-hint">
+									💡 Tip: Paste a <code>config.yaml</code> redirect snippet containing <code>url: &quot;/?filter=...&quot;</code> and click <strong>Apply to Tree</strong>.
+								</div>
+							</div>
+						</div>
 						</form>
 					</div>
 
-					<!-- Right Column: Sticky Simulation Results & Exports -->
+					<!-- Right Column: Sticky Live Simulation -->
 					<div class="playground-results-column">
 						<div id="filter-builder-results">
 							<div class="playground-card" style="text-align: center; padding: 3rem 1.5rem; color: #64748b;">

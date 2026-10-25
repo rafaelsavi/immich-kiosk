@@ -1,8 +1,6 @@
 package partials
 
 import (
-	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -36,87 +34,6 @@ templ FilterBuilderResult(d common.FilterBuilderResultData) {
 				<div>
 					<div style="font-weight: 700; margin-bottom: 0.25rem;">No Matching Assets</div>
 					<div>No photos or videos in Immich matched your filter criteria. Try loosening some conditions.</div>
-				</div>
-			</div>
-		}
-
-		if d.FilterJSON != "" {
-			<!-- Tabbed Output Card (JSON, URL, YAML) -->
-			<div class="playground-tabs-card">
-				<div class="playground-tabs-header">
-					<button type="button" class="playground-tab-btn active" data-tab="tab-json" onclick="switchPlaygroundTab('tab-json')">
-						⚡ Filter JSON
-					</button>
-					<button type="button" class="playground-tab-btn" data-tab="tab-url" onclick="switchPlaygroundTab('tab-url')">
-						🔗 Slideshow URL
-					</button>
-					<button type="button" class="playground-tab-btn" data-tab="tab-yaml" onclick="switchPlaygroundTab('tab-yaml')">
-						⚙️ config.yaml
-					</button>
-				</div>
-
-				<!-- Tab 1: Filter JSON -->
-				<div id="tab-json" class="playground-tab-pane active">
-					<div class="playground-tab-actions">
-						<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'filter-json-text')">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-							</svg>
-							<span>Copy JSON</span>
-						</button>
-					</div>
-					<div class="code-preview-box">
-						<pre id="filter-json-text">{ d.FilterJSON }</pre>
-					</div>
-				</div>
-
-				<!-- Tab 2: Direct Slideshow URL -->
-				<div id="tab-url" class="playground-tab-pane">
-					<div class="playground-tab-actions">
-						<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'kiosk-url-text')">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-							</svg>
-							<span>Copy URL</span>
-						</button>
-						<a href={ templ.SafeURL(d.KioskURL) } target="_blank" class="btn-tab-action btn-launch" title="Open slideshow in new tab">
-							<span>Launch Slideshow</span>
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-								<polyline points="15 3 21 3 21 9"></polyline>
-								<line x1="10" y1="14" x2="21" y2="3"></line>
-							</svg>
-						</a>
-						<a href={ templ.SafeURL(filterBuilderURL(d.FilterJSON, d.KioskURL)) } target="_blank" class="btn-tab-action btn-configure" title="Configure duration, weather, transitions in URL Builder">
-							<span>Customize in URL Builder</span>
-							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-								<polyline points="15 3 21 3 21 9"></polyline>
-								<line x1="10" y1="14" x2="21" y2="3"></line>
-							</svg>
-						</a>
-					</div>
-					<div class="code-preview-box">
-						<code id="kiosk-url-text">{ d.KioskURL }</code>
-					</div>
-				</div>
-
-				<!-- Tab 3: config.yaml snippet -->
-				<div id="tab-yaml" class="playground-tab-pane">
-					<div class="playground-tab-actions">
-						<button type="button" class="btn-tab-action btn-copy" onclick="copyPlaygroundSnippet(this, 'redirect-yaml-text')">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-							</svg>
-							<span>Copy YAML</span>
-						</button>
-					</div>
-					<div class="code-preview-box">
-						<pre id="redirect-yaml-text">{ d.RedirectYAML }</pre>
-					</div>
 				</div>
 			</div>
 		}
@@ -218,12 +135,6 @@ templ FilterBuilderResult(d common.FilterBuilderResultData) {
 				}
 			</div>
 		}
-
-		<script>
-			if (window.activePlaygroundTab) {
-				switchPlaygroundTab(window.activePlaygroundTab);
-			}
-		</script>
 	</div>
 }
 
@@ -239,15 +150,3 @@ func locationString(city, country string) string {
 	return country
 }
 
-func filterBuilderURL(filterJSON, kioskURL string) string {
-	u, err := url.Parse(kioskURL)
-	if err != nil {
-		return "/url-builder/extended?filter=" + url.QueryEscape(filterJSON)
-	}
-	password := u.Query().Get("password")
-	res := fmt.Sprintf("%s://%s/url-builder/extended?filter=%s", u.Scheme, u.Host, url.QueryEscape(filterJSON))
-	if password != "" {
-		res += "&password=" + url.QueryEscape(password)
-	}
-	return res
-}
