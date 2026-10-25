@@ -1449,58 +1449,109 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					return Object.keys(branch).length > 0 ? branch : null;
 				}
 
-				function compileGroupToAST(group) {
-					if (!group || !group.children || group.children.length === 0) return {};
-					const combiner = (group.combiner || 'AND').toUpperCase();
-
-					if (combiner === 'AND') {
-						const root = {};
-						const orBranches = [];
-
-						for (const child of group.children) {
-							if (child.type === 'rule') {
-								const b = compileRuleToBranch(child);
-								if (b) Object.assign(root, b);
-							} else if (child.type === 'group') {
-								const childCombiner = (child.combiner || 'AND').toUpperCase();
-								if (childCombiner === 'OR') {
-									const subBranches = [];
-									for (const subChild of child.children) {
-										if (subChild.type === 'rule') {
-											const b = compileRuleToBranch(subChild);
-											if (b) subBranches.push(b);
-										} else if (subChild.type === 'group') {
-											const b = compileGroupToAST(subChild);
-											if (b && Object.keys(b).length > 0) subBranches.push(b);
-										}
+				// Helper: compile an OR group into an array of flat branches (no nested 'or')
+				function compileOrGroupToBranches(group) {
+					if (!group || !group.children) return [];
+					const branches = [];
+					for (const child of group.children) {
+						if (child.type === 'rule') {
+							const b = compileRuleToBranch(child);
+							if (b && Object.keys(b).length > 0) branches.push(b);
+						} else if (child.type === 'group') {
+							const childCombiner = (child.combiner || 'AND').toUpperCase();
+							if (childCombiner === 'OR') {
+								// Child is OR: flatten its branches directly into parent OR
+								const sub = compileOrGroupToBranches(child);
+								branches.push(...sub);
+							} else {
+								// Child is AND: compile into conjunction branch(es)
+								const andResult = compileAndGroup(child);
+								if (andResult.or && andResult.or.length > 0) {
+									// If AND group had internal OR subgroups, distribute direct fields over its OR branches
+									const direct = Object.assign({}, andResult);
+									delete direct.or;
+									for (const orBranch of andResult.or) {
+										const merged = Object.assign({}, direct, orBranch);
+										if (Object.keys(merged).length > 0) branches.push(merged);
 									}
-									if (subBranches.length > 0) orBranches.push(...subBranches);
-								} else {
-									const b = compileGroupToAST(child);
-									if (b) {
-										if (b.or) orBranches.push(...b.or);
-										delete b.or;
-										Object.assign(root, b);
-									}
+								} else if (Object.keys(andResult).length > 0) {
+									branches.push(andResult);
 								}
 							}
 						}
+					}
+					return branches.filter(b => b && Object.keys(b).length > 0 && !b.or);
+				}
 
-						if (orBranches.length > 0) root.or = orBranches;
-						return root;
-					} else {
-						const branches = [];
-						for (const child of group.children) {
-							if (child.type === 'rule') {
-								const b = compileRuleToBranch(child);
-								if (b) branches.push(b);
-							} else if (child.type === 'group') {
-								const b = compileGroupToAST(child);
-								if (b && Object.keys(b).length > 0) branches.push(b);
+				// Helper: compile an AND group
+				function compileAndGroup(group) {
+					if (!group || !group.children) return {};
+					const root = {};
+					let orBranches = [];
+
+					for (const child of group.children) {
+						if (child.type === 'rule') {
+							const b = compileRuleToBranch(child);
+							if (b && Object.keys(b).length > 0) Object.assign(root, b);
+						} else if (child.type === 'group') {
+							const childCombiner = (child.combiner || 'AND').toUpperCase();
+							if (childCombiner === 'OR') {
+								const subBranches = compileOrGroupToBranches(child);
+								if (subBranches.length > 0) {
+									if (orBranches.length === 0) {
+										orBranches = subBranches;
+									} else {
+										// Cartesian product for multiple OR subgroups inside AND
+										const combined = [];
+										for (const b1 of orBranches) {
+											for (const b2 of subBranches) {
+												combined.push(Object.assign({}, b1, b2));
+											}
+										}
+										orBranches = combined;
+									}
+								}
+							} else {
+								// Child is nested AND: merge its direct fields and combine its OR branches
+								const subAnd = compileAndGroup(child);
+								if (subAnd.or && subAnd.or.length > 0) {
+									if (orBranches.length === 0) {
+										orBranches = subAnd.or;
+									} else {
+										const combined = [];
+										for (const b1 of orBranches) {
+											for (const b2 of subAnd.or) {
+												combined.push(Object.assign({}, b1, b2));
+											}
+										}
+										orBranches = combined;
+									}
+									delete subAnd.or;
+								}
+								if (Object.keys(subAnd).length > 0) {
+									Object.assign(root, subAnd);
+								}
 							}
 						}
+					}
+
+					// Filter orBranches to ensure no empty branches and no nested 'or'
+					orBranches = orBranches.filter(b => b && Object.keys(b).length > 0 && !b.or);
+					if (orBranches.length > 0) {
+						root.or = orBranches;
+					}
+					return root;
+				}
+
+				function compileGroupToAST(group) {
+					if (!group || !group.children || group.children.length === 0) return {};
+					const combiner = (group.combiner || 'AND').toUpperCase();
+					if (combiner === 'OR') {
+						const branches = compileOrGroupToBranches(group);
 						if (branches.length === 0) return {};
 						return { or: branches };
+					} else {
+						return compileAndGroup(group);
 					}
 				}
 
@@ -1518,70 +1569,98 @@ templ FilterBuilder(d common.FilterBuilderViewData) {
 					}
 				}
 
+				function parseFieldToRules(key, val, children) {
+					if (key === 'personIds' && val) {
+						const op = val.all ? 'all' : (val.none ? 'none' : 'any');
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'people', operator: op, value: val[op] || [] });
+					} else if (key === 'albumIds' && val) {
+						const op = val.all ? 'all' : (val.none ? 'none' : 'any');
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'albums', operator: op, value: val[op] || [] });
+					} else if (key === 'tagIds' && val) {
+						const op = val.all ? 'all' : (val.none ? 'none' : 'any');
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'tags', operator: op, value: val[op] || [] });
+					} else if (key === 'country' && val) {
+						const op = val.eq ? 'eq' : (val.notIn ? 'notIn' : 'in');
+						const v = val.eq ? [val.eq] : (val[op] || []);
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'country', operator: op, value: v });
+					} else if (key === 'state' && val) {
+						const op = val.notIn ? 'notIn' : 'in';
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'state', operator: op, value: val[op] || [] });
+					} else if (key === 'city' && val) {
+						const op = val.notIn ? 'notIn' : 'in';
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'city', operator: op, value: val[op] || [] });
+					} else if (key === 'model' && val) {
+						const op = val.notIn ? 'notIn' : 'in';
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'camera', operator: op, value: val[op] || [] });
+					} else if (key === 'isFavorite' && val) {
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'favorite', operator: val.eq ? 'true' : 'false', value: val.eq });
+					} else if (key === 'isMotion' && val) {
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: 'MOTION', value: 'MOTION' });
+					} else if (key === 'type' && val && val.in) {
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: val.in[0], value: val.in[0] });
+					} else if (key === 'rating' && val && val.gte) {
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'rating', operator: String(val.gte), value: val.gte });
+					} else if (key === 'hasPeople' && val) {
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_people', operator: val.eq ? 'true' : 'false', value: val.eq });
+					} else if (key === 'hasAlbums' && val) {
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_albums', operator: val.eq ? 'true' : 'false', value: val.eq });
+					} else if (key === 'hasTags' && val) {
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_tags', operator: val.eq ? 'true' : 'false', value: val.eq });
+					} else if (key === 'takenAt' && val) {
+						const op = (val.gte && val.lte) ? 'between' : (val.lte ? 'before' : 'after');
+						children.push({ id: generateNodeId('r'), type: 'rule', field: 'date', operator: op, dateAfter: val.gte || '', dateBefore: val.lte || '' });
+					}
+				}
+
 				function astToRuleGroup(ast) {
 					if (!ast || typeof ast !== 'object') return null;
-					if (Array.isArray(ast.or) && ast.or.length > 0) {
-						const children = [];
-						for (const branch of ast.or) {
-							const grp = astToRuleGroup(branch);
-							if (grp) {
-								if (grp.children && grp.children.length === 1) {
-									children.push(grp.children[0]);
-								} else {
-									children.push(grp);
-								}
+
+					const directRules = [];
+					for (const [key, val] of Object.entries(ast)) {
+						if (key === 'or') continue;
+						parseFieldToRules(key, val, directRules);
+					}
+
+					const hasOr = Array.isArray(ast.or) && ast.or.length > 0;
+
+					if (!hasOr) {
+						return {
+							id: generateNodeId('g'),
+							type: 'group',
+							combiner: 'AND',
+							children: directRules
+						};
+					}
+
+					const orBranches = [];
+					for (const branch of ast.or) {
+						const grp = astToRuleGroup(branch);
+						if (grp) {
+							if (grp.children && grp.children.length === 1) {
+								orBranches.push(grp.children[0]);
+							} else if (grp.children && grp.children.length > 1) {
+								orBranches.push(grp);
 							}
 						}
+					}
+
+					if (directRules.length === 0) {
 						return {
 							id: generateNodeId('g'),
 							type: 'group',
 							combiner: 'OR',
-							children: children
+							children: orBranches
 						};
 					}
-					const children = [];
-					for (const [key, val] of Object.entries(ast)) {
-						if (key === 'or') continue;
-						if (key === 'personIds' && val) {
-							const op = val.all ? 'all' : (val.none ? 'none' : 'any');
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'people', operator: op, value: val[op] || [] });
-						} else if (key === 'albumIds' && val) {
-							const op = val.all ? 'all' : (val.none ? 'none' : 'any');
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'albums', operator: op, value: val[op] || [] });
-						} else if (key === 'tagIds' && val) {
-							const op = val.all ? 'all' : (val.none ? 'none' : 'any');
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'tags', operator: op, value: val[op] || [] });
-						} else if (key === 'country' && val) {
-							const op = val.eq ? 'eq' : (val.notIn ? 'notIn' : 'in');
-							const v = val.eq ? [val.eq] : (val[op] || []);
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'country', operator: op, value: v });
-						} else if (key === 'state' && val) {
-							const op = val.notIn ? 'notIn' : 'in';
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'state', operator: op, value: val[op] || [] });
-						} else if (key === 'city' && val) {
-							const op = val.notIn ? 'notIn' : 'in';
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'city', operator: op, value: val[op] || [] });
-						} else if (key === 'model' && val) {
-							const op = val.notIn ? 'notIn' : 'in';
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'camera', operator: op, value: val[op] || [] });
-						} else if (key === 'isFavorite' && val) {
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'favorite', operator: val.eq ? 'true' : 'false', value: val.eq });
-						} else if (key === 'isMotion' && val) {
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: 'MOTION', value: 'MOTION' });
-						} else if (key === 'type' && val && val.in) {
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'media_type', operator: val.in[0], value: val.in[0] });
-						} else if (key === 'rating' && val && val.gte) {
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'rating', operator: String(val.gte), value: val.gte });
-						} else if (key === 'hasPeople' && val) {
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_people', operator: val.eq ? 'true' : 'false', value: val.eq });
-						} else if (key === 'hasAlbums' && val) {
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_albums', operator: val.eq ? 'true' : 'false', value: val.eq });
-						} else if (key === 'hasTags' && val) {
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'has_tags', operator: val.eq ? 'true' : 'false', value: val.eq });
-						} else if (key === 'takenAt' && val) {
-							const op = (val.gte && val.lte) ? 'between' : (val.lte ? 'before' : 'after');
-							children.push({ id: generateNodeId('r'), type: 'rule', field: 'date', operator: op, dateAfter: val.gte || '', dateBefore: val.lte || '' });
-						}
+
+					const children = [...directRules];
+					if (orBranches.length > 0) {
+						children.push({
+							id: generateNodeId('g'),
+							type: 'group',
+							combiner: 'OR',
+							children: orBranches
+						});
 					}
 					return {
 						id: generateNodeId('g'),
